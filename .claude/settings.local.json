@@ -1,7 +1,37 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)"
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)",
+      "Bash(npm install *)",
+      "Bash(npx prisma *)",
+      "Bash(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\danfa\\\\OneDrive\\\\Desktop\\\\Programs\\\\Web Development\\\\React\\\\Nextjs\\\\project-hypothetical\\\\src\\\\lib\")",
+      "Bash(Out-Null)",
+      "Bash(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\danfa\\\\OneDrive\\\\Desktop\\\\Programs\\\\Web Development\\\\React\\\\Nextjs\\\\project-hypothetical\\\\src\\\\components\")",
+      "Bash(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\danfa\\\\OneDrive\\\\Desktop\\\\Programs\\\\Web Development\\\\React\\\\Nextjs\\\\project-hypothetical\\\\src\\\\app\\\\api\\\\positions\\\\[id]\")",
+      "Bash(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\danfa\\\\OneDrive\\\\Desktop\\\\Programs\\\\Web Development\\\\React\\\\Nextjs\\\\project-hypothetical\\\\src\\\\app\\\\practice\")",
+      "Bash(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\danfa\\\\OneDrive\\\\Desktop\\\\Programs\\\\Web Development\\\\React\\\\Nextjs\\\\project-hypothetical\\\\src\\\\app\\\\create\")",
+      "Bash(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\danfa\\\\OneDrive\\\\Desktop\\\\Programs\\\\Web Development\\\\React\\\\Nextjs\\\\project-hypothetical\\\\src\\\\app\\\\positions\")",
+      "Bash(Write-Output \"Directories created\")",
+      "Bash(npm run *)",
+      "Bash(node -e \"const pkg = require\\('./node_modules/react-chessboard/package.json'\\); console.log\\(pkg.version\\)\")",
+      "Bash(node -e \"require\\('dotenv'\\).config\\(\\); const { PrismaClient } = require\\('./src/generated/prisma/client'\\); const p = new PrismaClient\\(\\); p.position.findMany\\(\\).then\\(r => console.log\\('OK', r\\)\\).catch\\(e => console.error\\('ERR', e.message\\)\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"const fs=require\\('fs'\\); ['stockfish-18-single.js','stockfish-18-lite-single.js','stockfish-18-asm.js'].forEach\\(f => { try { const s=fs.statSync\\('node_modules/stockfish/bin/'+f\\); console.log\\(f, Math.round\\(s.size/1024\\)+'kb'\\) } catch{} }\\)\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); ['stockfish-18-single.wasm','stockfish-18-lite-single.wasm'].forEach\\(f => { const s=fs.statSync\\('node_modules/stockfish/bin/'+f\\); console.log\\(f, Math.round\\(s.size/1024/1024*10\\)/10+'mb'\\) }\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.scripts, null, 2\\)\\)\")",
+      "Bash(node -e \"const fs=require\\('fs'\\),p=require\\('path'\\);fs.copyFileSync\\(p.join\\('node_modules','stockfish','bin','stockfish-18-lite-single.js'\\),'public/stockfish.js'\\);fs.copyFileSync\\(p.join\\('node_modules','stockfish','bin','stockfish-18-lite-single.wasm'\\),'public/stockfish.wasm'\\);console.log\\('Done'\\)\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\danfa\\\\OneDrive\\\\Desktop\\\\Programs\\\\Web Development\\\\React\\\\Nextjs\\\\project-hypothetical\\\\src\\\\hooks\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\danfa\\\\OneDrive\\\\Desktop\\\\Programs\\\\Web Development\\\\React\\\\Nextjs\\\\project-hypothetical\" -Recurse -Directory)",
+      "Bash(Select-Object -First 50 FullName)",
+      "Bash(node scripts/migrate-to-neon.mjs \"postgresql://neondb_owner:npg_IafEylPK53mM@ep-shy-cloud-ap291p49-pooler.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require\")",
+      "Bash(node -e \"import\\('node:sqlite'\\).then\\(m => console.log\\('node:sqlite OK'\\)\\).catch\\(e => console.log\\('failed:', e.message\\)\\)\")",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(32\\).toString\\('base64url'\\)\\)\")",
+      "Bash(mkdir -p \"c:/Users/danfa/OneDrive/Desktop/Programs/Web Development/React/Nextjs/project-hypothetical/src/app/api/auth/[...nextauth]\" && mkdir -p \"c:/Users/danfa/OneDrive/Desktop/Programs/Web Development/React/Nextjs/project-hypothetical/src/app/login\")",
+      "Bash(xargs grep -l -i \"middleware\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\danfa\\OneDrive\\Desktop\\Programs\\Web Development\\React\\Nextjs\\project-hypothetical\\src\\app\\api\\auth"
     ]
   }
 }
