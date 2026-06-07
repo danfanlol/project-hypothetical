@@ -20,5 +20,8 @@ export const authConfig = {
       return session
     },
   },
-  providers: [Google, GitHub],
+  providers: [
+    Google({ allowDangerousEmailAccountLinking: true }),
+    GitHub({ allowDangerousEmailAccountLinking: true }),
+  ],
 } satisfies NextAuthConfig
