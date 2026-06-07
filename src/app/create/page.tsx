@@ -28,6 +28,7 @@ export default function CreatePage() {
   const [finalFenMap, setFinalFenMap] = useState<Map<string, PositionData>>(new Map())
 
   const preview = computePreview(fen, move1, move2)
+  const previewFen = preview.valid ? preview.fen : null
 
   // Fetch existing positions and precompute their post-move FENs
   useEffect(() => {
@@ -47,9 +48,9 @@ export default function CreatePage() {
   // Warn when the current position (after both setup moves) matches an existing one.
   // Only activates once both move fields are filled.
   useEffect(() => {
-    if (!preview.valid || !move1.trim() || !move2.trim()) { setFenDuplicate(null); return }
-    setFenDuplicate(finalFenMap.get(preview.fen) ?? null)
-  }, [preview.valid, preview.fen, finalFenMap, move1, move2])
+    if (!previewFen || !move1.trim() || !move2.trim()) { setFenDuplicate(null); return }
+    setFenDuplicate(finalFenMap.get(previewFen) ?? null)
+  }, [previewFen, finalFenMap, move1, move2])
 
   // Auto-detect orientation from FEN's active-color field whenever FEN changes
   useEffect(() => {
