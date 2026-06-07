@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "node -e \"const fs=require('fs'),p=require('path');fs.copyFileSync(p.join('node_modules','stockfish','bin','stockfish-18-lite-single.js'),'public/stockfish.js');fs.copyFileSync(p.join('node_modules','stockfish','bin','stockfish-18-lite-single.wasm'),'public/stockfish.wasm');\""
