@@ -130,28 +130,25 @@ export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelPro
     return moved
   }
 
-  function handleSquareClick({ piece, square }: SquareHandlerArgs) {
+  function handleSquareMouseDown({ piece, square }: SquareHandlerArgs) {
     const turn = new Chess(explorationFen).turn()
+    if (piece?.pieceType[0] === turn) {
+      setSelectedSquare(square)
+      setOptionSquares(getMoveOptions(square, explorationFen))
+    }
+  }
 
-    if (selectedSquare) {
-      if (applyMove(selectedSquare, square)) {
-        setSelectedSquare(null)
-        setOptionSquares({})
-        return
-      }
-      if (piece?.pieceType[0] === turn && square !== selectedSquare) {
-        setSelectedSquare(square)
-        setOptionSquares(getMoveOptions(square, explorationFen))
-        return
-      }
+  function handleSquareClick({ piece, square }: SquareHandlerArgs) {
+    if (!selectedSquare || selectedSquare === square) return
+    const turn = new Chess(explorationFen).turn()
+    if (applyMove(selectedSquare, square)) {
       setSelectedSquare(null)
       setOptionSquares({})
       return
     }
-
-    if (piece?.pieceType[0] === turn) {
-      setSelectedSquare(square)
-      setOptionSquares(getMoveOptions(square, explorationFen))
+    if (!piece || piece.pieceType[0] !== turn) {
+      setSelectedSquare(null)
+      setOptionSquares({})
     }
   }
 
@@ -190,6 +187,7 @@ export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelPro
             boardOrientation: orientation,
             allowDragging: true,
             onPieceDrop: handlePieceDrop,
+            onSquareMouseDown: handleSquareMouseDown,
             onSquareClick: handleSquareClick,
             squareStyles: optionSquares,
             animationDurationInMs: 150,

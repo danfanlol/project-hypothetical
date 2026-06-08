@@ -81,7 +81,6 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
   const [wrongMove, setWrongMove] = useState<string | null>(null)
   const [analysisFen, setAnalysisFen] = useState<string | null>(null)
   const [replayKey, setReplayKey] = useState(0)
-  const [userMoveInfo, setUserMoveInfo] = useState<{ from: string; to: string } | null>(null)
   const [userMoveSan, setUserMoveSan] = useState<string | null>(null)
   const [isReplaying, setIsReplaying] = useState(false)
   const [replayResetting, setReplayResetting] = useState(false)
@@ -195,29 +194,27 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
     return moved
   }
 
-  function handleSquareClick({ piece, square }: SquareHandlerArgs) {
+  function handleSquareMouseDown({ piece, square }: SquareHandlerArgs) {
     if (phase !== "waiting" || isReplaying) return
     const turn = new Chess(fenRef.current).turn()
+    if (piece?.pieceType[0] === turn) {
+      setSelectedSquare(square)
+      setOptionSquares(getMoveOptions(square))
+    }
+  }
 
-    if (selectedSquare) {
-      if (executeMove(selectedSquare, square)) {
-        setSelectedSquare(null)
-        setOptionSquares({})
-        return
-      }
-      if (piece?.pieceType[0] === turn && square !== selectedSquare) {
-        setSelectedSquare(square)
-        setOptionSquares(getMoveOptions(square))
-        return
-      }
+  function handleSquareClick({ piece, square }: SquareHandlerArgs) {
+    if (phase !== "waiting" || isReplaying) return
+    if (!selectedSquare || selectedSquare === square) return
+    const turn = new Chess(fenRef.current).turn()
+    if (executeMove(selectedSquare, square)) {
       setSelectedSquare(null)
       setOptionSquares({})
       return
     }
-
-    if (piece?.pieceType[0] === turn) {
-      setSelectedSquare(square)
-      setOptionSquares(getMoveOptions(square))
+    if (!piece || piece.pieceType[0] !== turn) {
+      setSelectedSquare(null)
+      setOptionSquares({})
     }
   }
 
@@ -281,6 +278,7 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
               darkSquareStyle: { backgroundColor: boardColors.dark },
               lightSquareStyle: { backgroundColor: boardColors.light },
               squareStyles: optionSquares,
+              onSquareMouseDown: handleSquareMouseDown,
               onSquareClick: handleSquareClick,
               onPieceDrop: handlePieceDrop,
             }}
