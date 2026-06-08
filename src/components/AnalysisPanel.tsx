@@ -131,7 +131,11 @@ export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelPro
   }
 
   function handleSquareMouseDown({ piece, square }: SquareHandlerArgs, e: React.MouseEvent) {
-    if (e.button !== 0) return
+    if (e.button !== 0) {
+      setSelectedSquare(null)
+      setOptionSquares({})
+      return
+    }
     const turn = new Chess(explorationFen).turn()
     if (piece?.pieceType[0] === turn) {
       setSelectedSquare(square)
