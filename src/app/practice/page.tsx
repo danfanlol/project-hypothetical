@@ -115,7 +115,7 @@ function PracticeContent() {
   }, [targetId, allPositions])
 
   if (loading) {
-    return <div className="flex flex-1 items-center justify-center text-zinc-400">Loading…</div>
+    return <div className="flex flex-1 items-center justify-center text-zinc-400 dark:text-zinc-500">Loading…</div>
   }
 
   if (error) {
@@ -125,8 +125,8 @@ function PracticeContent() {
   if (queue.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-        <p className="text-zinc-500 text-lg">No positions saved yet.</p>
-        <Link href="/create" className="px-5 py-2 bg-zinc-900 text-white rounded-md text-sm hover:bg-zinc-700 transition-colors">
+        <p className="text-zinc-500 dark:text-zinc-400 text-lg">No positions saved yet.</p>
+        <Link href="/create" className="px-5 py-2 bg-zinc-900 dark:bg-zinc-700 text-white rounded-md text-sm hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors">
           Add your first position
         </Link>
       </div>
@@ -137,17 +137,17 @@ function PracticeContent() {
     <div className="flex flex-1 flex-col items-center justify-center px-4 py-8">
       {targetId && (
         <div className="mb-4 w-full max-w-[480px] flex items-center justify-between">
-          <Link href="/positions" className="text-sm text-zinc-400 hover:text-zinc-700 transition-colors">
+          <Link href="/positions" className="text-sm text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
             ← All positions
           </Link>
-          <Link href="/practice" className="text-sm text-zinc-400 hover:text-zinc-700 transition-colors">
+          <Link href="/practice" className="text-sm text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
             Full session →
           </Link>
         </div>
       )}
 
       {!targetId && (
-        <p className="mb-3 text-xs text-zinc-400">
+        <p className="mb-3 text-xs text-zinc-400 dark:text-zinc-500">
           {queue.length} remaining
         </p>
       )}

@@ -106,21 +106,21 @@ export default function EditPositionPage() {
 
       {/* Form */}
       <div className="flex-1 flex flex-col gap-5">
-        <h1 className="text-xl font-semibold text-zinc-900">Edit Position</h1>
+        <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Edit Position</h1>
 
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-zinc-700">Label</span>
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Label</span>
           <input
             type="text"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder="e.g. Sicilian Dragon"
-            className="border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+            className="border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600"
           />
         </label>
 
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-zinc-700">Correct moves</span>
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Correct moves</span>
           {correctMoves.map((m, i) => (
             <div key={i} className="flex gap-2 items-center">
               <input
@@ -128,7 +128,7 @@ export default function EditPositionPage() {
                 value={m}
                 onChange={(e) => updateMove(i, e.target.value)}
                 placeholder="e.g. Nf3"
-                className="flex-1 border border-zinc-300 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-zinc-400"
+                className="flex-1 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600"
               />
               {correctMoves.length > 1 && (
                 <button
@@ -151,7 +151,7 @@ export default function EditPositionPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-zinc-700">Board orientation during practice</span>
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Board orientation during practice</span>
           <div className="flex gap-3">
             {(["white", "black"] as const).map((opt) => (
               <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
@@ -163,7 +163,7 @@ export default function EditPositionPage() {
                   onChange={() => setBoardOrientation(opt)}
                   className="accent-zinc-900"
                 />
-                <span className="text-sm text-zinc-700 capitalize">{opt}</span>
+                <span className="text-sm text-zinc-700 dark:text-zinc-300 capitalize">{opt}</span>
               </label>
             ))}
           </div>
@@ -178,13 +178,13 @@ export default function EditPositionPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-5 py-2.5 bg-zinc-900 text-white rounded-md text-sm font-medium hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+            className="px-5 py-2.5 bg-zinc-900 dark:bg-zinc-700 text-white rounded-md text-sm font-medium hover:bg-zinc-700 dark:hover:bg-zinc-600 disabled:opacity-50 transition-colors"
           >
             {saving ? "Saving…" : "Save changes"}
           </button>
           <button
             onClick={() => router.push(returnTo)}
-            className="px-5 py-2.5 border border-zinc-300 rounded-md text-sm text-zinc-600 hover:bg-zinc-50 transition-colors"
+            className="px-5 py-2.5 border border-zinc-300 dark:border-zinc-700 rounded-md text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
           >
             Cancel
           </button>

@@ -52,15 +52,15 @@ function InvalidPosition({ label, onSkip, skipLabel }: { label: string | null; o
   return (
     <div className="flex flex-col items-center gap-4 w-full max-w-[480px]">
       {label && (
-        <p className="text-sm font-medium text-zinc-500 uppercase tracking-wide">{label}</p>
+        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">{label}</p>
       )}
-      <div className="w-full aspect-square bg-zinc-100 rounded-md border border-zinc-200 flex flex-col items-center justify-center gap-2 text-center p-6">
-        <p className="text-zinc-700 font-medium">Invalid position</p>
-        <p className="text-zinc-400 text-sm">The FEN for this position is invalid. Edit it to fix.</p>
+      <div className="w-full aspect-square bg-zinc-100 dark:bg-zinc-800 rounded-md border border-zinc-200 dark:border-zinc-700 flex flex-col items-center justify-center gap-2 text-center p-6">
+        <p className="text-zinc-700 dark:text-zinc-300 font-medium">Invalid position</p>
+        <p className="text-zinc-400 dark:text-zinc-500 text-sm">The FEN for this position is invalid. Edit it to fix.</p>
       </div>
       <button
         onClick={onSkip}
-        className="px-5 py-2 bg-zinc-900 text-white rounded-md text-sm hover:bg-zinc-700 transition-colors"
+        className="px-5 py-2 bg-zinc-900 dark:bg-zinc-700 text-white rounded-md text-sm hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
       >
         {skipLabel}
       </button>
@@ -214,7 +214,7 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
   return (
     <div className="flex flex-col items-center gap-4" style={{ width: "100%", maxWidth: boardSizePx }}>
       {position.label && (
-        <p className="text-sm font-medium text-zinc-500 uppercase tracking-wide">
+        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
           {position.label}
         </p>
       )}
@@ -240,16 +240,16 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
           <p className="text-zinc-400 text-sm">Get ready…</p>
         )}
         {(phase === "move1" || phase === "move2") && playedSan && (
-          <p className="text-zinc-600 font-mono text-base">
-            Playing <span className="font-bold text-zinc-900">{playedSan}</span>
+          <p className="text-zinc-600 dark:text-zinc-400 font-mono text-base">
+            Playing <span className="font-bold text-zinc-900 dark:text-zinc-100">{playedSan}</span>
           </p>
         )}
         {phase === "waiting" && (
           <div className="flex flex-col items-center gap-2">
-            <p className="text-zinc-900 font-semibold text-lg">Make the best move</p>
+            <p className="text-zinc-900 dark:text-zinc-100 font-semibold text-lg">Make the best move</p>
             <button
               onClick={() => setReplayKey((k) => k + 1)}
-              className="text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+              className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
             >
               ↺ Replay
             </button>
@@ -262,20 +262,20 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
               <button
                 onClick={startDoneReplay}
                 disabled={isReplaying}
-                className="px-4 py-2 border border-zinc-300 text-zinc-700 rounded-md text-sm hover:bg-zinc-50 disabled:opacity-40 transition-colors"
+                className="px-4 py-2 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-md text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 transition-colors"
               >
                 ↺ Replay
               </button>
               <button
                 onClick={() => setAnalysisFen(preMoveRef.current)}
                 disabled={analysisFen !== null}
-                className="px-4 py-2 border border-zinc-300 text-zinc-700 rounded-md text-sm hover:bg-zinc-50 disabled:opacity-40 transition-colors"
+                className="px-4 py-2 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-md text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 transition-colors"
               >
                 Analyze
               </button>
               <button
                 onClick={() => onNext(true)}
-                className="px-4 py-2 bg-zinc-900 text-white rounded-md text-sm hover:bg-zinc-700 transition-colors"
+                className="px-4 py-2 bg-zinc-900 dark:bg-zinc-700 text-white rounded-md text-sm hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
               >
                 {nextLabel}
               </button>
@@ -287,9 +287,9 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
             <p className="text-red-500 font-semibold">
               Wrong — you played <span className="font-mono">{wrongMove ? displaySan(wrongMove) : ""}</span>
             </p>
-            <p className="text-zinc-500 text-sm">
+            <p className="text-zinc-500 dark:text-zinc-400 text-sm">
               Correct:{" "}
-              <span className="font-mono font-medium text-zinc-700">
+              <span className="font-mono font-medium text-zinc-700 dark:text-zinc-300">
                 {position.correctMoves.map(displaySan).join(" or ")}
               </span>
             </p>
@@ -297,14 +297,14 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
               <button
                 onClick={startDoneReplay}
                 disabled={isReplaying}
-                className="px-4 py-2 border border-zinc-300 text-zinc-700 rounded-md text-sm hover:bg-zinc-50 disabled:opacity-40 transition-colors"
+                className="px-4 py-2 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-md text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 transition-colors"
               >
                 ↺ Replay
               </button>
               <button
                 onClick={() => setAnalysisFen(preMoveRef.current)}
                 disabled={analysisFen !== null}
-                className="px-4 py-2 border border-zinc-300 text-zinc-700 rounded-md text-sm hover:bg-zinc-50 disabled:opacity-40 transition-colors"
+                className="px-4 py-2 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-md text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 transition-colors"
               >
                 Analyze
               </button>
@@ -316,7 +316,7 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
               </Link>
               <button
                 onClick={() => onNext(false)}
-                className="px-4 py-2 bg-zinc-900 text-white rounded-md text-sm hover:bg-zinc-700 transition-colors"
+                className="px-4 py-2 bg-zinc-900 dark:bg-zinc-700 text-white rounded-md text-sm hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
               >
                 {nextLabel}
               </button>

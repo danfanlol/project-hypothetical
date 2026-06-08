@@ -28,7 +28,7 @@ export function SettingsDropdown() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
+        className="flex items-center gap-1 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
         aria-label="Settings"
       >
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -39,12 +39,31 @@ export function SettingsDropdown() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-zinc-200 rounded-lg shadow-lg p-4 z-50 flex flex-col gap-5">
+        <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg p-4 z-50 flex flex-col gap-5">
+          {/* Dark mode */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Dark mode</span>
+            <button
+              onClick={() => update({ theme: settings.theme === "dark" ? "light" : "dark" })}
+              role="switch"
+              aria-checked={settings.theme === "dark"}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                settings.theme === "dark" ? "bg-zinc-800" : "bg-zinc-200"
+              }`}
+            >
+              <span
+                className={`inline-block h-3.5 w-3.5 rounded-full bg-white dark:bg-zinc-900 shadow transition-transform ${
+                  settings.theme === "dark" ? "translate-x-5" : "translate-x-0.5"
+                }`}
+              />
+            </button>
+          </div>
+
           {/* Board size */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-zinc-700">Board size</span>
-              <span className="text-xs text-zinc-400 font-mono">{settings.boardSizePx}px</span>
+              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Board size</span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500 font-mono">{settings.boardSizePx}px</span>
             </div>
             <input
               type="range"
@@ -53,9 +72,9 @@ export function SettingsDropdown() {
               step={20}
               value={settings.boardSizePx}
               onChange={(e) => update({ boardSizePx: Number(e.target.value) })}
-              className="w-full accent-zinc-900"
+              className="w-full accent-zinc-900 dark:accent-zinc-100"
             />
-            <div className="flex justify-between text-xs text-zinc-400">
+            <div className="flex justify-between text-xs text-zinc-400 dark:text-zinc-500">
               <span>Small</span>
               <span>Large</span>
             </div>
@@ -63,7 +82,7 @@ export function SettingsDropdown() {
 
           {/* Practice order */}
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-zinc-700">Practice order</span>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Practice order</span>
             <div className="flex flex-col gap-1.5">
               {([
                 ["ordered", "Increasing move count"],
@@ -76,9 +95,9 @@ export function SettingsDropdown() {
                     value={value}
                     checked={settings.practiceOrder === value}
                     onChange={() => update({ practiceOrder: value })}
-                    className="accent-zinc-900"
+                    className="accent-zinc-900 dark:accent-zinc-100"
                   />
-                  <span className="text-sm text-zinc-600">{label}</span>
+                  <span className="text-sm text-zinc-600 dark:text-zinc-400">{label}</span>
                 </label>
               ))}
             </div>

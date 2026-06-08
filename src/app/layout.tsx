@@ -19,24 +19,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
-      <body className="min-h-full flex flex-col bg-zinc-50 text-zinc-900">
+      <body className="min-h-full flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
         <SettingsProvider>
-          <header className="border-b border-zinc-200 bg-white">
+          <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
             <nav className="max-w-5xl mx-auto px-4 h-12 flex items-center gap-6">
-              <Link href="/practice" className="font-semibold text-zinc-900 text-sm">
+              <Link href="/practice" className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">
                 ♟ Chess Lines
               </Link>
-              <div className="flex gap-4 text-sm text-zinc-500">
-                <Link href="/practice" className="hover:text-zinc-900 transition-colors">
+              <div className="flex gap-4 text-sm text-zinc-500 dark:text-zinc-400">
+                <Link href="/practice" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
                   Practice
                 </Link>
-                <Link href="/create" className="hover:text-zinc-900 transition-colors">
+                <Link href="/create" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
                   Add Position
                 </Link>
-                <Link href="/positions" className="hover:text-zinc-900 transition-colors">
+                <Link href="/positions" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
                   All Positions
                 </Link>
-                <Link href="/search" className="hover:text-zinc-900 transition-colors">
+                <Link href="/search" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
                   Search
                 </Link>
               </div>
@@ -52,7 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                         referrerPolicy="no-referrer"
                       />
                     ) : (
-                      <div className="w-7 h-7 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-medium text-zinc-600">
+                      <div className="w-7 h-7 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-xs font-medium text-zinc-600 dark:text-zinc-300">
                         {(session.user.name ?? session.user.email ?? "?")[0].toUpperCase()}
                       </div>
                     )}
@@ -64,7 +64,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     >
                       <button
                         type="submit"
-                        className="text-xs text-zinc-400 hover:text-zinc-900 transition-colors"
+                        className="text-xs text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
                       >
                         Sign out
                       </button>

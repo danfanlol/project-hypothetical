@@ -138,9 +138,9 @@ export default function CreatePage() {
             />
           </ChessErrorBoundary>
         ) : (
-          <div className="w-full aspect-square bg-zinc-50 border-2 border-dashed border-zinc-300 rounded-md flex flex-col items-center justify-center gap-2 text-center p-6">
-            <p className="text-zinc-500 font-medium">Invalid FEN</p>
-            <p className="text-zinc-400 text-sm">Fix the starting FEN above to see a preview.</p>
+          <div className="w-full aspect-square bg-zinc-50 dark:bg-zinc-800 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-md flex flex-col items-center justify-center gap-2 text-center p-6">
+            <p className="text-zinc-500 dark:text-zinc-400 font-medium">Invalid FEN</p>
+            <p className="text-zinc-400 dark:text-zinc-500 text-sm">Fix the starting FEN above to see a preview.</p>
           </div>
         )}
         <p className="text-xs text-zinc-400 mt-2 text-center">
@@ -149,28 +149,28 @@ export default function CreatePage() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-5">
-        <h1 className="text-xl font-semibold text-zinc-900">Add a Position</h1>
+        <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Add a Position</h1>
 
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-zinc-700">Label (optional)</span>
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Label (optional)</span>
           <input
             type="text"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder="e.g. Sicilian Dragon"
-            className="border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+            className="border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600"
           />
         </label>
 
         <div className="flex flex-col gap-1">
           <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-zinc-700">Starting FEN</span>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Starting FEN</span>
             <input
               type="text"
               value={fen}
               onChange={(e) => setFen(e.target.value)}
               required
-              className="border border-zinc-300 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-zinc-400"
+              className="border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600"
             />
           </label>
           {fenDuplicate && (
@@ -185,31 +185,31 @@ export default function CreatePage() {
 
         <div className="grid grid-cols-2 gap-4">
           <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-zinc-700">Setup move 1</span>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Setup move 1</span>
             <input
               type="text"
               value={move1}
               onChange={(e) => setMove1(e.target.value)}
               placeholder="e.g. e4"
               required
-              className="border border-zinc-300 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-zinc-400"
+              className="border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600"
             />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-zinc-700">Setup move 2</span>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Setup move 2</span>
             <input
               type="text"
               value={move2}
               onChange={(e) => setMove2(e.target.value)}
               placeholder="e.g. e5"
               required
-              className="border border-zinc-300 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-zinc-400"
+              className="border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600"
             />
           </label>
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-zinc-700">Board orientation during practice</span>
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Board orientation during practice</span>
           <div className="flex gap-3">
             {(["white", "black"] as const).map((opt) => (
               <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
@@ -221,7 +221,7 @@ export default function CreatePage() {
                   onChange={() => setBoardOrientation(opt)}
                   className="accent-zinc-900"
                 />
-                <span className="text-sm text-zinc-700 capitalize">{opt}</span>
+                <span className="text-sm text-zinc-700 dark:text-zinc-300 capitalize">{opt}</span>
               </label>
             ))}
           </div>
@@ -231,7 +231,7 @@ export default function CreatePage() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-zinc-700">Correct move(s)</span>
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Correct move(s)</span>
           {correctMoves.map((m, i) => (
             <div key={i} className="flex gap-2 items-center">
               <input
@@ -256,7 +256,7 @@ export default function CreatePage() {
           <button
             type="button"
             onClick={addCorrectMove}
-            className="text-sm text-zinc-500 hover:text-zinc-800 self-start transition-colors"
+            className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 self-start transition-colors"
           >
             + Add another correct move
           </button>
@@ -267,7 +267,7 @@ export default function CreatePage() {
         <button
           type="submit"
           disabled={submitting}
-          className="px-5 py-2.5 bg-zinc-900 text-white rounded-md text-sm font-medium hover:bg-zinc-700 disabled:opacity-50 transition-colors self-start"
+          className="px-5 py-2.5 bg-zinc-900 dark:bg-zinc-700 text-white rounded-md text-sm font-medium hover:bg-zinc-700 dark:hover:bg-zinc-600 disabled:opacity-50 transition-colors self-start"
         >
           {submitting ? "Saving…" : "Save position"}
         </button>

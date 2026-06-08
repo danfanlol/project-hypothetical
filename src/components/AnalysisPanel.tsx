@@ -108,20 +108,20 @@ export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelPro
   }
 
   return (
-    <div className="w-full border border-zinc-200 rounded-lg p-4 bg-white mt-3" style={{ maxWidth: settings.boardSizePx }}>
+    <div className="w-full border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 bg-white dark:bg-zinc-900 mt-3" style={{ maxWidth: settings.boardSizePx }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-zinc-700">Engine Analysis</h3>
+        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Engine Analysis</h3>
         <div className="flex items-center gap-3">
           {hasMoved && (
             <button
               onClick={() => { setHistory([initialFen]); setHistoryIndex(0) }}
-              className="text-xs text-zinc-500 hover:text-zinc-800 underline transition-colors"
+              className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 underline transition-colors"
             >
               Reset
             </button>
           )}
-          <span className="text-xs text-zinc-400">
+          <span className="text-xs text-zinc-400 dark:text-zinc-500">
             {isStale
               ? <span className="animate-pulse">Updating…</span>
               : isAnalyzing
@@ -146,7 +146,7 @@ export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelPro
             boardStyle: { borderRadius: "4px" },
           }}
         />
-        <p className="text-xs text-zinc-400 text-center mt-1.5">
+        <p className="text-xs text-zinc-400 dark:text-zinc-500 text-center mt-1.5">
           {isBlackToMove ? "Black to move" : "White to move"}
           {" · drag pieces to explore"}
         </p>
@@ -154,22 +154,22 @@ export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelPro
 
       {/* Analysis lines */}
       {displayLines.length === 0 && (
-        <p className="text-xs text-zinc-400 text-center py-3">
+        <p className="text-xs text-zinc-400 dark:text-zinc-500 text-center py-3">
           {isAnalyzing ? "Loading engine…" : "No analysis available"}
         </p>
       )}
 
-      <div className={`flex flex-col divide-y divide-zinc-100 mt-2 transition-opacity duration-200 ${isStale ? "opacity-40" : "opacity-100"}`}>
+      <div className={`flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800 mt-2 transition-opacity duration-200 ${isStale ? "opacity-40" : "opacity-100"}`}>
         {displayLines.map((line) => (
           <div key={line.multipv} className="flex items-baseline gap-3 py-2 first:pt-0 last:pb-0">
             <span
               className={`text-sm font-mono font-semibold w-14 shrink-0 ${
-                isPositiveScore(line, isBlackToMove) ? "text-zinc-900" : "text-zinc-400"
+                isPositiveScore(line, isBlackToMove) ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400 dark:text-zinc-500"
               }`}
             >
               {formatScore(line, isBlackToMove)}
             </span>
-            <span className="text-sm font-mono text-zinc-600 leading-snug">
+            <span className="text-sm font-mono text-zinc-600 dark:text-zinc-400 leading-snug">
               {line.sanMoves.slice(0, 4).join("  ")}
             </span>
           </div>

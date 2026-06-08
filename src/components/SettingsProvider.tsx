@@ -20,6 +20,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [])
 
+  useEffect(() => {
+    const html = document.documentElement
+    if (settings.theme === "dark") html.classList.add("dark")
+    else html.classList.remove("dark")
+  }, [settings.theme])
+
   function update(patch: Partial<Settings>) {
     setSettings((prev) => {
       const next = { ...prev, ...patch }
