@@ -8,6 +8,7 @@ import Link from "next/link"
 import { ChessErrorBoundary } from "@/components/ChessErrorBoundary"
 import { AnalysisPanel } from "@/components/AnalysisPanel"
 import { useSettings } from "@/components/SettingsProvider"
+import { BOARD_THEMES } from "@/lib/settings"
 
 type Phase = "ready" | "move1" | "move2" | "waiting" | "done"
 
@@ -71,6 +72,7 @@ function InvalidPosition({ label, onSkip, skipLabel }: { label: string | null; o
 export function DrillBoard({ position, onNext, nextLabel = "Next position →" }: DrillBoardProps) {
   const { settings } = useSettings()
   const boardSizePx = settings.boardSizePx
+  const boardColors = BOARD_THEMES[settings.boardTheme]
   const isFenValid = (() => { try { new Chess(position.fen); return true } catch { return false } })()
   const [fen, setFen] = useState(position.fen)
   const [phase, setPhase] = useState<Phase>("ready")
@@ -228,6 +230,8 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
               allowDragging: phase === "waiting" && !isReplaying,
               animationDurationInMs: replayResetting ? 0 : (phase === "ready" ? 0 : ANIMATION_MS),
               boardStyle: { borderRadius: "4px", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" },
+              darkSquareStyle: { backgroundColor: boardColors.dark },
+              lightSquareStyle: { backgroundColor: boardColors.light },
               onPieceDrop: handlePieceDrop,
             }}
           />

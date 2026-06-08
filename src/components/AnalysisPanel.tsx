@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useSettings } from "@/components/SettingsProvider"
+import { BOARD_THEMES } from "@/lib/settings"
 import dynamic from "next/dynamic"
 import { Chess } from "chess.js"
 import { useStockfish, type AnalysisLine } from "@/hooks/useStockfish"
@@ -54,6 +55,7 @@ interface AnalysisPanelProps {
 
 export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelProps) {
   const { settings } = useSettings()
+  const boardColors = BOARD_THEMES[settings.boardTheme]
   const [history, setHistory] = useState<string[]>([initialFen])
   const [historyIndex, setHistoryIndex] = useState(0)
   const explorationFen = history[historyIndex]
@@ -144,6 +146,8 @@ export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelPro
             onPieceDrop: handlePieceDrop,
             animationDurationInMs: 150,
             boardStyle: { borderRadius: "4px" },
+              darkSquareStyle: { backgroundColor: boardColors.dark },
+              lightSquareStyle: { backgroundColor: boardColors.light },
           }}
         />
         <p className="text-xs text-zinc-400 dark:text-zinc-500 text-center mt-1.5">

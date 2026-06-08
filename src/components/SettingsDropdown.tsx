@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useSettings } from "@/components/SettingsProvider"
+import { BOARD_THEMES, type BoardTheme } from "@/lib/settings"
 
 export function SettingsDropdown() {
   const { settings, update } = useSettings()
@@ -57,6 +58,27 @@ export function SettingsDropdown() {
                 }`}
               />
             </button>
+          </div>
+
+          {/* Board color */}
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Board color</span>
+            <div className="grid grid-cols-3 gap-2">
+              {(Object.entries(BOARD_THEMES) as [BoardTheme, { dark: string; light: string }][]).map(([key, colors]) => (
+                <button
+                  key={key}
+                  onClick={() => update({ boardTheme: key })}
+                  aria-label={key}
+                  className={`flex items-center justify-center h-11 rounded-lg border-2 bg-zinc-100 dark:bg-zinc-800 transition-colors ${
+                    settings.boardTheme === key
+                      ? "border-blue-500"
+                      : "border-transparent hover:border-zinc-300 dark:hover:border-zinc-600"
+                  }`}
+                >
+                  <span className="w-5 h-5 rounded-full" style={{ backgroundColor: colors.dark }} />
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Board size */}
