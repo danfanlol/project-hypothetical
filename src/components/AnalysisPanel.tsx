@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type CSSProperties } from "react"
 import { useSettings } from "@/components/SettingsProvider"
 import { BOARD_THEMES } from "@/lib/settings"
 import dynamic from "next/dynamic"
-import { Chess } from "chess.js"
+import { Chess, type Square } from "chess.js"
 import { useStockfish, type AnalysisLine } from "@/hooks/useStockfish"
-import type { PieceDropHandlerArgs } from "react-chessboard"
+import type { PieceDropHandlerArgs, SquareHandlerArgs } from "react-chessboard"
 
 const Chessboard = dynamic(
   () => import("react-chessboard").then((m) => m.Chessboard),
@@ -58,6 +58,8 @@ export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelPro
   const boardColors = BOARD_THEMES[settings.boardTheme]
   const [history, setHistory] = useState<string[]>([initialFen])
   const [historyIndex, setHistoryIndex] = useState(0)
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null)
+  const [optionSquares, setOptionSquares] = useState<Record<string, CSSProperties>>({})
   const explorationFen = history[historyIndex]
 
   const { lines, isAnalyzing } = useStockfish(explorationFen)
@@ -95,18 +97,62 @@ export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelPro
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [])
 
-  function handlePieceDrop({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean {
-    if (!targetSquare) return false
+  function getMoveOptions(square: string, fen: string): Record<string, CSSProperties> {
+    const game = new Chess(fen)
+    const moves = game.moves({ square: square as Square, verbose: true })
+    const options: Record<string, CSSProperties> = {
+      [square]: { background: "rgba(255,255,0,0.4)" },
+    }
+    for (const m of moves) {
+      options[m.to] = game.get(m.to)
+        ? { background: "radial-gradient(circle, rgba(0,0,0,.18) 80%, transparent 80%)" }
+        : { background: "radial-gradient(circle, rgba(0,0,0,.18) 25%, transparent 25%)" }
+    }
+    return options
+  }
+
+  function applyMove(from: string, to: string): boolean {
     const game = new Chess(explorationFen)
     try {
-      game.move({ from: sourceSquare, to: targetSquare, promotion: "q" })
+      game.move({ from, to, promotion: "q" })
     } catch {
       return false
     }
-    const newFen = game.fen()
-    setHistory((prev) => [...prev.slice(0, historyIndex + 1), newFen])
+    setHistory((prev) => [...prev.slice(0, historyIndex + 1), game.fen()])
     setHistoryIndex((i) => i + 1)
     return true
+  }
+
+  function handlePieceDrop({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean {
+    if (!targetSquare) return false
+    const moved = applyMove(sourceSquare, targetSquare)
+    if (moved) { setSelectedSquare(null); setOptionSquares({}) }
+    return moved
+  }
+
+  function handleSquareClick({ piece, square }: SquareHandlerArgs) {
+    const turn = new Chess(explorationFen).turn()
+
+    if (selectedSquare) {
+      if (applyMove(selectedSquare, square)) {
+        setSelectedSquare(null)
+        setOptionSquares({})
+        return
+      }
+      if (piece?.pieceType[0] === turn && square !== selectedSquare) {
+        setSelectedSquare(square)
+        setOptionSquares(getMoveOptions(square, explorationFen))
+        return
+      }
+      setSelectedSquare(null)
+      setOptionSquares({})
+      return
+    }
+
+    if (piece?.pieceType[0] === turn) {
+      setSelectedSquare(square)
+      setOptionSquares(getMoveOptions(square, explorationFen))
+    }
   }
 
   return (
@@ -144,15 +190,17 @@ export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelPro
             boardOrientation: orientation,
             allowDragging: true,
             onPieceDrop: handlePieceDrop,
+            onSquareClick: handleSquareClick,
+            squareStyles: optionSquares,
             animationDurationInMs: 150,
             boardStyle: { borderRadius: "4px" },
-              darkSquareStyle: { backgroundColor: boardColors.dark },
-              lightSquareStyle: { backgroundColor: boardColors.light },
+            darkSquareStyle: { backgroundColor: boardColors.dark },
+            lightSquareStyle: { backgroundColor: boardColors.light },
           }}
         />
         <p className="text-xs text-zinc-400 dark:text-zinc-500 text-center mt-1.5">
           {isBlackToMove ? "Black to move" : "White to move"}
-          {" · drag pieces to explore"}
+          {" · click or drag to explore"}
         </p>
       </div>
 

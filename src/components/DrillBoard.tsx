@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { Chessboard, type PieceDropHandlerArgs } from "react-chessboard"
-import { Chess } from "chess.js"
+import { useEffect, useRef, useState, type CSSProperties } from "react"
+import { Chessboard, type PieceDropHandlerArgs, type SquareHandlerArgs } from "react-chessboard"
+import { Chess, type Square } from "chess.js"
 import type { PositionData } from "@/lib/types"
 import Link from "next/link"
 import { ChessErrorBoundary } from "@/components/ChessErrorBoundary"
@@ -85,6 +85,8 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
   const [userMoveSan, setUserMoveSan] = useState<string | null>(null)
   const [isReplaying, setIsReplaying] = useState(false)
   const [replayResetting, setReplayResetting] = useState(false)
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null)
+  const [optionSquares, setOptionSquares] = useState<Record<string, CSSProperties>>({})
   const fenRef = useRef(fen)
   const preMoveRef = useRef(fen)  // FEN after move1+move2, before user's response
   const replayTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
@@ -114,6 +116,8 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
     setUserMoveSan(null)
     setIsReplaying(false)
     setReplayResetting(false)
+    setSelectedSquare(null)
+    setOptionSquares({})
     replayTimersRef.current.forEach(clearTimeout)
     replayTimersRef.current = []
 
@@ -149,19 +153,30 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
     }
   }, [position, replayKey])
 
-  function handlePieceDrop({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean {
-    if (phase !== "waiting" || !targetSquare) return false
+  function getMoveOptions(square: string): Record<string, CSSProperties> {
+    const game = new Chess(fenRef.current)
+    const moves = game.moves({ square: square as Square, verbose: true })
+    const options: Record<string, CSSProperties> = {
+      [square]: { background: "rgba(255,255,0,0.4)" },
+    }
+    for (const m of moves) {
+      options[m.to] = game.get(m.to)
+        ? { background: "radial-gradient(circle, rgba(0,0,0,.18) 80%, transparent 80%)" }
+        : { background: "radial-gradient(circle, rgba(0,0,0,.18) 25%, transparent 25%)" }
+    }
+    return options
+  }
 
+  function executeMove(from: string, to: string): boolean {
     const game = new Chess(fenRef.current)
     let move
     try {
-      move = game.move({ from: sourceSquare, to: targetSquare, promotion: "q" })
+      move = game.move({ from, to, promotion: "q" })
     } catch {
       return false
     }
     if (!move) return false
-
-    preMoveRef.current = fenRef.current  // capture before fen state is updated
+    preMoveRef.current = fenRef.current
     const isCorrect = position.correctMoves.some(
       (m) => m.toLowerCase() === move.san.toLowerCase()
     )
@@ -170,7 +185,40 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
     setUserMoveSan(move.san)
     if (isCorrect) setFen(game.fen())
     else setWrongMove(move.san)
-    return isCorrect
+    return true
+  }
+
+  function handlePieceDrop({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean {
+    if (phase !== "waiting" || !targetSquare) return false
+    const moved = executeMove(sourceSquare, targetSquare)
+    if (moved) { setSelectedSquare(null); setOptionSquares({}) }
+    return moved
+  }
+
+  function handleSquareClick({ piece, square }: SquareHandlerArgs) {
+    if (phase !== "waiting" || isReplaying) return
+    const turn = new Chess(fenRef.current).turn()
+
+    if (selectedSquare) {
+      if (executeMove(selectedSquare, square)) {
+        setSelectedSquare(null)
+        setOptionSquares({})
+        return
+      }
+      if (piece?.pieceType[0] === turn && square !== selectedSquare) {
+        setSelectedSquare(square)
+        setOptionSquares(getMoveOptions(square))
+        return
+      }
+      setSelectedSquare(null)
+      setOptionSquares({})
+      return
+    }
+
+    if (piece?.pieceType[0] === turn) {
+      setSelectedSquare(square)
+      setOptionSquares(getMoveOptions(square))
+    }
   }
 
   function startDoneReplay() {
@@ -232,6 +280,8 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
               boardStyle: { borderRadius: "4px", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" },
               darkSquareStyle: { backgroundColor: boardColors.dark },
               lightSquareStyle: { backgroundColor: boardColors.light },
+              squareStyles: optionSquares,
+              onSquareClick: handleSquareClick,
               onPieceDrop: handlePieceDrop,
             }}
           />
