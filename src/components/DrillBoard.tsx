@@ -194,7 +194,8 @@ export function DrillBoard({ position, onNext, nextLabel = "Next position →" }
     return moved
   }
 
-  function handleSquareMouseDown({ piece, square }: SquareHandlerArgs) {
+  function handleSquareMouseDown({ piece, square }: SquareHandlerArgs, e: React.MouseEvent) {
+    if (e.button !== 0) return
     if (phase !== "waiting" || isReplaying) return
     const turn = new Chess(fenRef.current).turn()
     if (piece?.pieceType[0] === turn) {
