@@ -27,14 +27,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 ♟ Chess Lines
               </Link>
               <div className="flex gap-4 text-sm text-zinc-500 dark:text-zinc-400">
-                <Link href="/practice" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-                  Practice
-                </Link>
-                <Link href="/create" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-                  Add Position
+                <Link href="/lines" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
+                  Lines
                 </Link>
                 <Link href="/positions" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-                  All Positions
+                  Positions
+                </Link>
+<Link href="/practice" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
+                  Practice
                 </Link>
                 <Link href="/search" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
                   Search

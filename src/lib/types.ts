@@ -8,3 +8,22 @@ export interface PositionData {
   boardOrientation: "auto" | "white" | "black"
   createdAt: string
 }
+
+export interface LineNode {
+  id: string
+  move: string
+  fen: string
+  annotation?: string
+  positionId?: string
+  children: LineNode[]
+}
+
+export interface LineData {
+  id: string
+  label: string | null
+  startFen: string
+  tree: LineNode[]
+  boardOrientation: "white" | "black"
+  createdAt: string
+  updatedAt: string
+}

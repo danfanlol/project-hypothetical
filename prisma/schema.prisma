@@ -20,6 +20,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   positions     Position[]
+  lines         Line[]
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 }
@@ -71,4 +72,16 @@ model Position {
   createdAt        DateTime @default(now())
   userId           String?
   user             User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Line {
+  id               String   @id @default(cuid())
+  label            String?
+  startFen         String   @default("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+  tree             Json     @default("[]")
+  boardOrientation String   @default("white") // "white" | "black"
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
