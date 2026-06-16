@@ -156,7 +156,13 @@ export function LineTreeView({ nodes, startFen, selectedId, onSelect, onDelete }
 
   function handleContextMenu(e: React.MouseEvent, node: LineNode) {
     e.preventDefault()
-    setContextMenu({ x: e.clientX, y: e.clientY, node })
+    const menuHeight = 80
+    const menuWidth = 190
+    const x = Math.min(e.clientX, window.innerWidth - menuWidth - 8)
+    const y = e.clientY + menuHeight > window.innerHeight - 8
+      ? e.clientY - menuHeight
+      : e.clientY
+    setContextMenu({ x, y, node })
   }
 
   if (nodes.length === 0) {
