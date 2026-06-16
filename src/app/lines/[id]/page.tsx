@@ -52,6 +52,12 @@ function findParentNode(nodes: LineNode[], targetId: string): LineNode | null {
   return null
 }
 
+// Returns an existing child of parentId (or top-level node) that matches the SAN move.
+function getExistingChild(tree: LineNode[], parentId: string | null, san: string): LineNode | null {
+  const siblings = parentId === null ? tree : (findNode(tree, parentId)?.children ?? [])
+  return siblings.find((c) => c.move === san) ?? null
+}
+
 // ─── Move helpers ─────────────────────────────────────────────────────────────
 
 function tryMove(chess: Chess, san: string): string | null {
@@ -252,6 +258,13 @@ export default function LineEditorPage() {
       return null
     }
     setMoveError("")
+    const existing = getExistingChild(line.tree, selectedId, san)
+    if (existing) {
+      setSelectedId(existing.id)
+      setCurrentFen(existing.fen)
+      setAnnotationInput(existing.annotation ?? "")
+      return san
+    }
     const newNode: LineNode = {
       id: crypto.randomUUID(),
       move: san,
@@ -282,6 +295,14 @@ export default function LineEditorPage() {
     if (!move) return false
 
     setMoveError("")
+    const existing = getExistingChild(line!.tree, selectedId, move.san)
+    if (existing) {
+      setSelectedId(existing.id)
+      setCurrentFen(existing.fen)
+      setAnnotationInput(existing.annotation ?? "")
+      setSelectedSquare(null)
+      return true
+    }
     const newNode: LineNode = {
       id: crypto.randomUUID(),
       move: move.san,
@@ -322,6 +343,14 @@ export default function LineEditorPage() {
     if (!move) { setSelectedSquare(null); return }
 
     setMoveError("")
+    const existing = getExistingChild(line.tree, selectedId, move.san)
+    if (existing) {
+      setSelectedId(existing.id)
+      setCurrentFen(existing.fen)
+      setAnnotationInput(existing.annotation ?? "")
+      setSelectedSquare(null)
+      return
+    }
     const newNode: LineNode = {
       id: crypto.randomUUID(),
       move: move.san,
