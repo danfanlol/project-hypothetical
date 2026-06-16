@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import type { LineData, LineNode } from "@/lib/types"
 
@@ -15,19 +15,52 @@ interface Props {
 }
 
 export function LineList({ initialLines }: Props) {
+  const [lines, setLines] = useState(initialLines)
   const [search, setSearch] = useState("")
   const [visible, setVisible] = useState(PAGE_SIZE)
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState("")
+  const renameRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { setVisible(PAGE_SIZE) }, [search])
 
+  useEffect(() => {
+    if (renamingId) renameRef.current?.focus()
+  }, [renamingId])
+
   const filtered = search.trim()
-    ? initialLines.filter((l) =>
+    ? lines.filter((l) =>
         (l.label ?? "").toLowerCase().includes(search.toLowerCase())
       )
-    : initialLines
+    : lines
 
   const shown = filtered.slice(0, visible)
   const remaining = filtered.length - visible
+
+  function startRename(line: LineData, e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    setRenamingId(line.id)
+    setRenameValue(line.label ?? "")
+  }
+
+  async function commitRename(id: string) {
+    const trimmed = renameValue.trim()
+    setRenamingId(null)
+    setLines((prev) =>
+      prev.map((l) => (l.id === id ? { ...l, label: trimmed || null } : l))
+    )
+    await fetch(`/api/lines/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label: trimmed || null }),
+    })
+  }
+
+  function handleRenameKey(e: React.KeyboardEvent, id: string) {
+    if (e.key === "Enter") commitRename(id)
+    if (e.key === "Escape") setRenamingId(null)
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -73,27 +106,63 @@ export function LineList({ initialLines }: Props) {
         <ul className="flex flex-col gap-3">
           {shown.map((line) => {
             const moveCount = countNodes(line.tree)
+            const isRenaming = renamingId === line.id
+
             return (
               <li key={line.id} className="relative">
-                <Link
-                  href={`/lines/${line.id}`}
-                  className="absolute inset-0 rounded-lg z-0"
-                  aria-label={line.label ?? "Untitled"}
-                />
-                <div className="flex items-start justify-between gap-4 border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-3 bg-white dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer">
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                      {line.label || (
-                        <span className="text-zinc-400 dark:text-zinc-500 font-normal italic">Untitled</span>
-                      )}
-                    </p>
+                {!isRenaming && (
+                  <Link
+                    href={`/lines/${line.id}`}
+                    className="absolute inset-0 rounded-lg z-0"
+                    aria-label={line.label ?? "Untitled"}
+                  />
+                )}
+                <div className={`flex items-start justify-between gap-4 border rounded-lg px-4 py-3 bg-white dark:bg-zinc-900 transition-colors ${
+                  isRenaming
+                    ? "border-zinc-400 dark:border-zinc-500"
+                    : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 cursor-pointer"
+                }`}>
+                  <div className="flex flex-col gap-1 min-w-0 flex-1">
+                    {isRenaming ? (
+                      <input
+                        ref={renameRef}
+                        type="text"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onBlur={() => commitRename(line.id)}
+                        onKeyDown={(e) => handleRenameKey(e, line.id)}
+                        placeholder="Line name…"
+                        className="font-medium text-zinc-900 dark:text-zinc-100 bg-transparent focus:outline-none w-full border-b border-zinc-400 dark:border-zinc-500 pb-0.5"
+                      />
+                    ) : (
+                      <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                        {line.label || (
+                          <span className="text-zinc-400 dark:text-zinc-500 font-normal italic">Untitled</span>
+                        )}
+                      </p>
+                    )}
                     <p className="text-xs text-zinc-500 dark:text-zinc-500 font-mono truncate">{line.startFen}</p>
                     <p className="text-xs text-zinc-400 dark:text-zinc-500">
                       {moveCount} {moveCount === 1 ? "move" : "moves"} &middot;{" "}
                       {new Date(line.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="shrink-0 mt-0.5 relative z-10">
+                  <div className="flex items-center gap-2 shrink-0 mt-0.5 relative z-10">
+                    {isRenaming ? (
+                      <button
+                        onClick={() => setRenamingId(null)}
+                        className="text-xs px-3 py-1.5 border border-zinc-300 dark:border-zinc-600 text-zinc-500 dark:text-zinc-400 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    ) : (
+                      <button
+                        onClick={(e) => startRename(line, e)}
+                        className="text-xs px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                      >
+                        Rename
+                      </button>
+                    )}
                     <Link
                       href={`/lines/${line.id}`}
                       className="text-xs px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"

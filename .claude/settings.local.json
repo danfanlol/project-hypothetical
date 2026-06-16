@@ -28,7 +28,8 @@
       "Bash(taskkill /F /IM node.exe)",
       "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(32\\).toString\\('base64url'\\)\\)\")",
       "Bash(mkdir -p \"c:/Users/danfa/OneDrive/Desktop/Programs/Web Development/React/Nextjs/project-hypothetical/src/app/api/auth/[...nextauth]\" && mkdir -p \"c:/Users/danfa/OneDrive/Desktop/Programs/Web Development/React/Nextjs/project-hypothetical/src/app/login\")",
-      "Bash(xargs grep -l -i \"middleware\")"
+      "Bash(xargs grep -l -i \"middleware\")",
+      "Bash(git add *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\danfa\\OneDrive\\Desktop\\Programs\\Web Development\\React\\Nextjs\\project-hypothetical\\src\\app\\api\\auth"
