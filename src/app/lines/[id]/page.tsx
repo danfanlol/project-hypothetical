@@ -8,6 +8,7 @@ import { Chessboard, type PieceDropHandlerArgs, type SquareHandlerArgs } from "r
 import type { LineData, LineNode, PositionData } from "@/lib/types"
 import { fenKey } from "@/lib/chess-utils"
 import { LineTreeView } from "@/components/LineTreeView"
+import { AnalysisPanel } from "@/components/AnalysisPanel"
 import { ChessErrorBoundary } from "@/components/ChessErrorBoundary"
 import { useSettings } from "@/components/SettingsProvider"
 import { BOARD_THEMES } from "@/lib/settings"
@@ -134,6 +135,9 @@ export default function LineEditorPage() {
   // Confirm delete
   const [confirmDelete, setConfirmDelete] = useState(false)
 
+  // Engine analysis toggle
+  const [showAnalysis, setShowAnalysis] = useState(false)
+
   // Transposition detection
   const [fenMap, setFenMap] = useState<Map<string, TranspositionMatch[]> | null>(null)
   const [lineLabelMap, setLineLabelMap] = useState<Map<string, string | null>>(new Map())
@@ -164,6 +168,8 @@ export default function LineEditorPage() {
     function handleKeyDown(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement).tagName
       if (tag === "INPUT" || tag === "TEXTAREA") return
+
+      if (showAnalysis && (e.key === "ArrowLeft" || e.key === "ArrowRight")) return
 
       if (e.key === "ArrowLeft") {
         e.preventDefault()
@@ -211,7 +217,7 @@ export default function LineEditorPage() {
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [selectedId, line, boardOrientation])
+  }, [selectedId, line, boardOrientation, showAnalysis])
 
   // ─── Transposition map ───────────────────────────────────────────────────
 
@@ -671,6 +677,19 @@ export default function LineEditorPage() {
               </button>
             </form>
             {moveError && <p className="text-xs text-red-500">{moveError}</p>}
+          </div>
+
+          {/* Engine analysis */}
+          <div className="w-full">
+            <button
+              onClick={() => setShowAnalysis((s) => !s)}
+              className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 border border-zinc-200 dark:border-zinc-700 rounded px-2 py-1 transition-colors"
+            >
+              {showAnalysis ? "Hide analysis" : "Analyze"}
+            </button>
+            {showAnalysis && (
+              <AnalysisPanel key={currentFen} fen={currentFen} orientation={boardOrientation} />
+            )}
           </div>
 
           {/* Within-line transposition banner */}
