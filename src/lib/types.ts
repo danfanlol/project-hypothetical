@@ -15,6 +15,7 @@ export interface LineNode {
   fen: string
   annotation?: string
   positionId?: string
+  transposeLineId?: string
   children: LineNode[]
 }
 

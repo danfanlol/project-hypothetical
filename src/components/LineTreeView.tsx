@@ -129,6 +129,16 @@ function MoveBtn({
           {node.annotation}
         </span>
       )}
+      {node.transposeLineId && (
+        <span
+          className={`ml-1 text-xs ${
+            selected ? "text-zinc-400 dark:text-zinc-600" : "text-amber-500 dark:text-amber-400"
+          }`}
+          title="Linked transposition"
+        >
+          ⇄
+        </span>
+      )}
     </button>
   )
 }

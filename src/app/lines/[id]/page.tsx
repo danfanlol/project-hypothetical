@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Chess, type Square } from "chess.js"
 import { Chessboard, type PieceDropHandlerArgs, type SquareHandlerArgs } from "react-chessboard"
 import type { LineData, LineNode, PositionData } from "@/lib/types"
+import { fenKey } from "@/lib/chess-utils"
 import { LineTreeView } from "@/components/LineTreeView"
 import { ChessErrorBoundary } from "@/components/ChessErrorBoundary"
 import { useSettings } from "@/components/SettingsProvider"
@@ -52,6 +53,10 @@ function findParentNode(nodes: LineNode[], targetId: string): LineNode | null {
   return null
 }
 
+function walkNodes(nodes: LineNode[], cb: (node: LineNode) => void): void {
+  for (const n of nodes) { cb(n); walkNodes(n.children, cb) }
+}
+
 // Returns an existing child of parentId (or top-level node) that matches the SAN move.
 function getExistingChild(tree: LineNode[], parentId: string | null, san: string): LineNode | null {
   const siblings = parentId === null ? tree : (findNode(tree, parentId)?.children ?? [])
@@ -76,6 +81,10 @@ function tryMove(chess: Chess, san: string): string | null {
     return null
   }
 }
+
+// ─── Transposition ───────────────────────────────────────────────────────────
+
+type TranspositionMatch = { lineId: string; lineLabel: string | null; move: string }
 
 // ─── Save status ─────────────────────────────────────────────────────────────
 
@@ -124,6 +133,10 @@ export default function LineEditorPage() {
 
   // Confirm delete
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  // Transposition detection
+  const [fenMap, setFenMap] = useState<Map<string, TranspositionMatch[]> | null>(null)
+  const [lineLabelMap, setLineLabelMap] = useState<Map<string, string | null>>(new Map())
 
   // ─── Load line ────────────────────────────────────────────────────────────
 
@@ -199,6 +212,34 @@ export default function LineEditorPage() {
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [selectedId, line, boardOrientation])
+
+  // ─── Transposition map ───────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!line) return
+    fetch("/api/lines")
+      .then((r) => r.json())
+      .then((lines: LineData[]) => {
+        const map = new Map<string, TranspositionMatch[]>()
+        const labels = new Map<string, string | null>()
+        for (const l of lines) {
+          if (l.id === id) continue
+          labels.set(l.id, l.label)
+          walkNodes(l.tree, (node) => {
+            const key = fenKey(node.fen)
+            const existing = map.get(key) ?? []
+            if (!existing.some((m) => m.lineId === l.id)) {
+              existing.push({ lineId: l.id, lineLabel: l.label, move: node.move })
+              map.set(key, existing)
+            }
+          })
+        }
+        setFenMap(map)
+        setLineLabelMap(labels)
+      })
+      .catch(() => {/* silently skip if fetch fails */})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [line?.id])
 
   // ─── Autosave ────────────────────────────────────────────────────────────
 
@@ -440,6 +481,24 @@ export default function LineEditorPage() {
     scheduleSave({ tree: newTree })
   }
 
+  // ─── Transposition linking ────────────────────────────────────────────────
+
+  function linkTransposition(transposeLineId: string) {
+    if (!selectedId || !line) return
+    const newTree = updateNode(line.tree, selectedId, { transposeLineId })
+    const updated = { ...line, tree: newTree }
+    setLine(updated)
+    scheduleSave({ tree: newTree })
+  }
+
+  function unlinkTransposition() {
+    if (!selectedId || !line) return
+    const newTree = updateNode(line.tree, selectedId, { transposeLineId: undefined })
+    const updated = { ...line, tree: newTree }
+    setLine(updated)
+    scheduleSave({ tree: newTree })
+  }
+
   // ─── Delete line ─────────────────────────────────────────────────────────
 
   async function deleteLine() {
@@ -448,6 +507,19 @@ export default function LineEditorPage() {
   }
 
   // ─── Render ───────────────────────────────────────────────────────────────
+
+  // Must be before early returns — hooks cannot be called conditionally
+  const intraFenMap = useMemo(() => {
+    if (!line) return new Map<string, LineNode[]>()
+    const map = new Map<string, LineNode[]>()
+    walkNodes(line.tree, (node) => {
+      const key = fenKey(node.fen)
+      const existing = map.get(key) ?? []
+      existing.push(node)
+      map.set(key, existing)
+    })
+    return map
+  }, [line])
 
   if (loading) {
     return (
@@ -470,6 +542,11 @@ export default function LineEditorPage() {
 
   const selectedNode = selectedId ? findNode(line.tree, selectedId) : null
   const boardSizePx = settings.boardSizePx
+  const transpositions = fenMap?.get(fenKey(currentFen)) ?? []
+
+  const intraTranspositions = selectedId
+    ? (intraFenMap.get(fenKey(currentFen)) ?? []).filter((n) => n.id !== selectedId)
+    : []
 
   const filteredPositions = positions
     ? posSearch.trim()
@@ -596,6 +673,65 @@ export default function LineEditorPage() {
             {moveError && <p className="text-xs text-red-500">{moveError}</p>}
           </div>
 
+          {/* Within-line transposition banner */}
+          {intraTranspositions.length > 0 && (
+            <div className="w-full rounded-md border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/30 px-3 py-2 flex flex-col gap-1.5">
+              <p className="text-xs font-medium text-sky-700 dark:text-sky-400">
+                ↩ Another variation in this line reaches the same position:
+              </p>
+              <div className="flex flex-col gap-1">
+                {intraTranspositions.map((n) => (
+                  <div key={n.id} className="flex items-center gap-2 min-w-0">
+                    <span className="text-xs text-sky-600 dark:text-sky-300 flex-1 truncate font-mono">
+                      …{n.move}
+                    </span>
+                    <button
+                      onClick={() => selectNode(n)}
+                      className="shrink-0 text-xs text-sky-700 dark:text-sky-400 border border-sky-300 dark:border-sky-700 rounded px-1.5 py-0.5 hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors"
+                    >
+                      Jump to
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Cross-line transposition banner */}
+          {transpositions.length > 0 && (
+            <div className="w-full rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 flex flex-col gap-1.5">
+              <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                ⇄ Transposition — this position is also reached in:
+              </p>
+              <div className="flex flex-col gap-1">
+                {transpositions.map((t) => (
+                  <div key={t.lineId} className="flex items-center gap-2 min-w-0">
+                    <span className="text-xs text-amber-600 dark:text-amber-300 flex-1 truncate">
+                      {t.lineLabel ?? "Untitled line"}
+                    </span>
+                    {selectedId && selectedNode?.transposeLineId !== t.lineId && (
+                      <button
+                        onClick={() => linkTransposition(t.lineId)}
+                        className="shrink-0 text-xs text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700 rounded px-1.5 py-0.5 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+                      >
+                        Link
+                      </button>
+                    )}
+                    {selectedNode?.transposeLineId === t.lineId && (
+                      <span className="shrink-0 text-xs text-amber-500 dark:text-amber-500">Linked ✓</span>
+                    )}
+                    <Link
+                      href={`/lines/${t.lineId}`}
+                      className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+                    >
+                      Open →
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Node actions (only when a node is selected) */}
           {selectedNode && (
             <div className="w-full flex flex-col gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
@@ -635,6 +771,27 @@ export default function LineEditorPage() {
                   </button>
                 )}
               </div>
+
+              {/* Transposition link status */}
+              {selectedNode.transposeLineId && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-amber-600 dark:text-amber-400">
+                    ⇄ Linked to {lineLabelMap.get(selectedNode.transposeLineId) ?? "Untitled line"}
+                  </span>
+                  <Link
+                    href={`/lines/${selectedNode.transposeLineId}`}
+                    className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+                  >
+                    Open →
+                  </Link>
+                  <button
+                    onClick={unlinkTransposition}
+                    className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    Unlink
+                  </button>
+                </div>
+              )}
 
               {/* Delete node */}
               <button
