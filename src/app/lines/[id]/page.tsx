@@ -550,6 +550,12 @@ export default function LineEditorPage() {
   const boardSizePx = settings.boardSizePx
   const transpositions = fenMap?.get(fenKey(currentFen)) ?? []
 
+  // Filter the tree to the selected node's level: show its siblings + their subtrees.
+  // This collapses all branches above the current position so deep lines stay visible.
+  const treeViewParent = selectedId ? findParentNode(line.tree, selectedId) : null
+  const treeViewNodes = treeViewParent ? treeViewParent.children : line.tree
+  const treeViewStartFen = treeViewParent ? treeViewParent.fen : line.startFen
+
   const intraTranspositions = selectedId
     ? (intraFenMap.get(fenKey(currentFen)) ?? []).filter((n) => n.id !== selectedId)
     : []
@@ -852,8 +858,8 @@ export default function LineEditorPage() {
           </div>
 
           <LineTreeView
-            nodes={line.tree}
-            startFen={line.startFen}
+            nodes={treeViewNodes}
+            startFen={treeViewStartFen}
             selectedId={selectedId}
             onSelect={selectNode}
             onDelete={(node) => deleteNode(node.id)}
