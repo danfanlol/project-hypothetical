@@ -58,6 +58,17 @@ function walkNodes(nodes: LineNode[], cb: (node: LineNode) => void): void {
   for (const n of nodes) { cb(n); walkNodes(n.children, cb) }
 }
 
+// Returns a stripped tree: the single path from root to targetId, each ancestor
+// pruned to only the child on that path. The target node keeps all its children.
+function buildPathTree(nodes: LineNode[], targetId: string): LineNode[] {
+  for (const n of nodes) {
+    if (n.id === targetId) return [n]
+    const sub = buildPathTree(n.children, targetId)
+    if (sub.length > 0) return [{ ...n, children: sub }]
+  }
+  return []
+}
+
 // Returns an existing child of parentId (or top-level node) that matches the SAN move.
 function getExistingChild(tree: LineNode[], parentId: string | null, san: string): LineNode | null {
   const siblings = parentId === null ? tree : (findNode(tree, parentId)?.children ?? [])
@@ -550,11 +561,9 @@ export default function LineEditorPage() {
   const boardSizePx = settings.boardSizePx
   const transpositions = fenMap?.get(fenKey(currentFen)) ?? []
 
-  // Filter the tree to the selected node's level: show its siblings + their subtrees.
-  // This collapses all branches above the current position so deep lines stay visible.
-  const treeViewParent = selectedId ? findParentNode(line.tree, selectedId) : null
-  const treeViewNodes = treeViewParent ? treeViewParent.children : line.tree
-  const treeViewStartFen = treeViewParent ? treeViewParent.fen : line.startFen
+  // Show only the spine from root to selectedId (no siblings at intermediate levels),
+  // with the selected node's children fully expanded below it.
+  const treeViewNodes = selectedId ? buildPathTree(line.tree, selectedId) : line.tree
 
   const intraTranspositions = selectedId
     ? (intraFenMap.get(fenKey(currentFen)) ?? []).filter((n) => n.id !== selectedId)
@@ -859,7 +868,7 @@ export default function LineEditorPage() {
 
           <LineTreeView
             nodes={treeViewNodes}
-            startFen={treeViewStartFen}
+            startFen={line.startFen}
             selectedId={selectedId}
             onSelect={selectNode}
             onDelete={(node) => deleteNode(node.id)}
