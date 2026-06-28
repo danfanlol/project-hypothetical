@@ -353,7 +353,7 @@ export function useLineReview(line: LineData) {
   }, [])
 
   const showHint = useCallback(() => {
-    if (stateRef.current.wrongCount >= 3) {
+    if (stateRef.current.wrongCount >= 1) {
       dispatch({ type: "SHOW_HINT" })
     }
   }, [])

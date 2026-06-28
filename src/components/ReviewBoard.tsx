@@ -174,7 +174,7 @@ export function ReviewBoard({
             <p className="text-zinc-900 dark:text-zinc-100 font-semibold text-lg">
               Make the best move
             </p>
-            {wrongCount >= 3 && (
+            {wrongCount >= 1 && (
               <button
                 onClick={onShowHint}
                 className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline underline-offset-2 transition-colors"
