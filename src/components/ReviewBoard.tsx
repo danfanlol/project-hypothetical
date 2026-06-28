@@ -128,7 +128,14 @@ export function ReviewBoard({
       <div className="w-full flex items-center justify-between">
         <div className="flex flex-col gap-0.5">
           {lineLabel && (
-            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{lineLabel}</p>
+            <Link
+              href={`/lines/${lineId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:underline"
+            >
+              {lineLabel}
+            </Link>
           )}
           {progressText && (
             <p className="text-xs text-zinc-400 dark:text-zinc-500">{progressText}</p>
