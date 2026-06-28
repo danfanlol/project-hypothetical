@@ -10,16 +10,24 @@ interface Props {
 }
 
 export function AllLinesReviewClient({ lines }: Props) {
+  const [queue] = useState(() => {
+    const arr = [...lines]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr
+  })
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  if (currentIndex >= lines.length) {
+  if (currentIndex >= queue.length) {
     return (
       <div className="flex flex-col items-center gap-4 py-16">
         <p className="text-zinc-900 dark:text-zinc-100 font-semibold text-xl">
           All lines reviewed!
         </p>
         <p className="text-zinc-400 dark:text-zinc-500 text-sm">
-          {lines.length} {lines.length === 1 ? "line" : "lines"} completed
+          {queue.length} {queue.length === 1 ? "line" : "lines"} completed
         </p>
         <Link
           href="/lines"
@@ -31,7 +39,7 @@ export function AllLinesReviewClient({ lines }: Props) {
     )
   }
 
-  const line = lines[currentIndex]
+  const line = queue[currentIndex]
 
   return (
     <LineReviewClient
