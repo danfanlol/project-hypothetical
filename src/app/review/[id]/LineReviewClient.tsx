@@ -23,6 +23,7 @@ export function LineReviewClient({ line, onDone, exitHref }: Props) {
     progressText,
     snapBoard,
     wrongCount,
+    isLastMove,
     submitMove,
     advance,
     showHint,
@@ -36,6 +37,7 @@ export function LineReviewClient({ line, onDone, exitHref }: Props) {
       progressText={progressText}
       snapBoard={snapBoard}
       wrongCount={wrongCount}
+      isLastMove={isLastMove}
       lineLabel={line.label}
       lineId={line.id}
       onMove={submitMove}

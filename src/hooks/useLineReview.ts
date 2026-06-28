@@ -89,6 +89,7 @@ function isSiblingTransition(oldStack: ReviewFrame[], newStack: ReviewFrame[]): 
   return false
 }
 
+
 function advanceFrame(stack: ReviewFrame[]): ReviewFrame[] {
   if (!stack.length) return stack
   const frames = cloneFrames(stack)
@@ -380,6 +381,7 @@ export function useLineReview(line: LineData) {
     progressText,
     snapBoard: state.snapBoard,
     wrongCount: state.wrongCount,
+    isLastMove: state.currentNode !== null && state.currentNode.children.length === 0,
     submitMove,
     advance,
     showHint,

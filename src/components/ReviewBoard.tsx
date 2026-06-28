@@ -17,6 +17,7 @@ interface ReviewBoardProps {
   progressText: string
   snapBoard: boolean
   wrongCount: number
+  isLastMove: boolean
   lineLabel: string | null
   lineId: string
   onMove: (from: string, to: string) => void
@@ -33,6 +34,7 @@ export function ReviewBoard({
   progressText,
   snapBoard,
   wrongCount,
+  isLastMove,
   lineLabel,
   lineId,
   onMove,
@@ -68,9 +70,9 @@ export function ReviewBoard({
   // Auto-advance after a correct answer
   useEffect(() => {
     if (status !== "showing_correct") return
-    const t = setTimeout(onNext, 0)
+    const t = setTimeout(onNext, isLastMove ? 300 : 0)
     return () => clearTimeout(t)
-  }, [status, onNext])
+  }, [status, onNext, isLastMove])
 
   const isInteractive = status === "awaiting_user"
 
