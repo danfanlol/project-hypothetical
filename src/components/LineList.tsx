@@ -164,6 +164,12 @@ export function LineList({ initialLines }: Props) {
                       </button>
                     )}
                     <Link
+                      href={`/review/${line.id}`}
+                      className="text-xs px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                    >
+                      Review
+                    </Link>
+                    <Link
                       href={`/lines/${line.id}`}
                       className="text-xs px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                     >

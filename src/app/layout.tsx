@@ -36,6 +36,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 <Link href="/practice" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
                   Practice
                 </Link>
+                <Link href="/review" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
+                  Review
+                </Link>
                 <Link href="/search" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
                   Search
                 </Link>
