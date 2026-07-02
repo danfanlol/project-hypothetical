@@ -775,64 +775,7 @@ export default function LineEditorPage() {
             )}
           </div>
 
-          {/* Within-line transposition banner */}
-          {intraTranspositions.length > 0 && (
-            <div className="w-full rounded-md border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/30 px-3 py-2 flex flex-col gap-1.5">
-              <p className="text-xs font-medium text-sky-700 dark:text-sky-400">
-                ↩ Another variation in this line reaches the same position:
-              </p>
-              <div className="flex flex-col gap-1">
-                {intraTranspositions.map((n) => (
-                  <div key={n.id} className="flex items-center gap-2 min-w-0">
-                    <span className="text-xs text-sky-600 dark:text-sky-300 flex-1 truncate font-mono">
-                      …{n.move}
-                    </span>
-                    <button
-                      onClick={() => selectNode(n)}
-                      className="shrink-0 text-xs text-sky-700 dark:text-sky-400 border border-sky-300 dark:border-sky-700 rounded px-1.5 py-0.5 hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors"
-                    >
-                      Jump to
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Cross-line transposition banner */}
-          {transpositions.length > 0 && (
-            <div className="w-full rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 flex flex-col gap-1.5">
-              <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                ⇄ Transposition — this position is also reached in:
-              </p>
-              <div className="flex flex-col gap-1">
-                {transpositions.map((t) => (
-                  <div key={t.lineId} className="flex items-center gap-2 min-w-0">
-                    <span className="text-xs text-amber-600 dark:text-amber-300 flex-1 truncate">
-                      {t.lineLabel ?? "Untitled line"}
-                    </span>
-                    {selectedId && selectedNode?.transposeLineId !== t.lineId && (
-                      <button
-                        onClick={() => linkTransposition(t.lineId)}
-                        className="shrink-0 text-xs text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700 rounded px-1.5 py-0.5 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
-                      >
-                        Link
-                      </button>
-                    )}
-                    {selectedNode?.transposeLineId === t.lineId && (
-                      <span className="shrink-0 text-xs text-amber-500 dark:text-amber-500">Linked ✓</span>
-                    )}
-                    <Link
-                      href={`/lines/${t.lineId}`}
-                      className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
-                    >
-                      Open →
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Transposition banners moved to left column */}
 
           {/* Node actions (only when a node is selected) */}
           {selectedNode && (
