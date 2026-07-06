@@ -19,6 +19,7 @@ export default async function ReviewAllPage() {
   const lines: LineData[] = rows.map((l) => ({
     id: l.id,
     label: l.label,
+    labelAuto: l.labelAuto,
     startFen: l.startFen,
     tree: l.tree as unknown as LineNode[],
     boardOrientation: l.boardOrientation as "white" | "black",

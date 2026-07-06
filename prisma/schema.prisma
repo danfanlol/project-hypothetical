@@ -88,6 +88,7 @@ model Opening {
 model Line {
   id               String   @id @default(cuid())
   label            String?
+  labelAuto        Boolean  @default(true) // true = label is auto-classified and keeps refining; false = user-set, frozen
   startFen         String   @default("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
   tree             Json     @default("[]")
   boardOrientation String   @default("white") // "white" | "black"

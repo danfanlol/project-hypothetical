@@ -27,10 +27,12 @@ export async function POST(req: Request) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const { label, startFen } = await req.json()
+  const trimmedLabel: string | null = label?.trim() || null
 
   const line = await prisma.line.create({
     data: {
-      label: label || null,
+      label: trimmedLabel,
+      labelAuto: !trimmedLabel,
       startFen: startFen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
       tree: [],
       userId: session.user.id,

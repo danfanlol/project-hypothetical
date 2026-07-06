@@ -21,6 +21,7 @@ export default async function ReviewPage({
   const line: LineData = {
     id: row.id,
     label: row.label,
+    labelAuto: row.labelAuto,
     startFen: row.startFen,
     tree: row.tree as unknown as LineNode[],
     boardOrientation: row.boardOrientation as "white" | "black",

@@ -36,6 +36,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     where: { id },
     data: {
       ...(body.label !== undefined && { label: body.label || null }),
+      ...(body.labelAuto !== undefined && { labelAuto: body.labelAuto }),
       ...(body.tree !== undefined && { tree: body.tree }),
       ...(body.boardOrientation !== undefined && { boardOrientation: body.boardOrientation }),
     },

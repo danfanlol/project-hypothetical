@@ -30,6 +30,7 @@ export interface LineNode {
 export interface LineData {
   id: string
   label: string | null
+  labelAuto: boolean
   startFen: string
   tree: LineNode[]
   boardOrientation: "white" | "black"

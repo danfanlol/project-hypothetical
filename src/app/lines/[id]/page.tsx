@@ -189,9 +189,9 @@ export default function LineEditorPage() {
         const data = await response.json() as { opening: OpeningData | null }
         setOpening(data.opening)
 
-        if (data.opening?.name) {
+        if (data.opening?.name && activeLine.labelAuto) {
           const nextLabel = data.opening.name
-          if (!activeLine.label || activeLine.label !== nextLabel) {
+          if (activeLine.label !== nextLabel) {
             setLabel(nextLabel)
             setLine({ ...activeLine, label: nextLabel })
             scheduleSave({ label: nextLabel })
@@ -295,7 +295,7 @@ export default function LineEditorPage() {
 
   // ─── Autosave ────────────────────────────────────────────────────────────
 
-  type SavePatch = { label?: string | null; tree?: LineNode[]; boardOrientation?: "white" | "black" }
+  type SavePatch = { label?: string | null; labelAuto?: boolean; tree?: LineNode[]; boardOrientation?: "white" | "black" }
 
   const saveToServer = useCallback(
     async (patch: SavePatch) => {
@@ -494,9 +494,10 @@ export default function LineEditorPage() {
 
   function handleLabelBlur() {
     if (!line) return
-    const updated = { ...line, label: label.trim() || null }
+    const trimmed = label.trim() || null
+    const updated = { ...line, label: trimmed, labelAuto: !trimmed }
     setLine(updated)
-    scheduleSave({ label: label.trim() || null })
+    scheduleSave({ label: trimmed, labelAuto: !trimmed })
   }
 
   function handleLabelChange(value: string) {
@@ -618,14 +619,21 @@ export default function LineEditorPage() {
     <div className="flex flex-col flex-1 min-h-0">
       {/* Header */}
       <div className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-2 flex items-center gap-3">
-        <input
-          type="text"
-          value={label}
-          onChange={(e) => handleLabelChange(e.target.value)}
-          onBlur={handleLabelBlur}
-          placeholder="Untitled line"
-          className="flex-1 bg-transparent text-sm font-medium text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none min-w-0"
-        />
+        <div className="flex-1 flex flex-col min-w-0">
+          <input
+            type="text"
+            value={label}
+            onChange={(e) => handleLabelChange(e.target.value)}
+            onBlur={handleLabelBlur}
+            placeholder="Untitled line"
+            className="w-full bg-transparent text-sm font-medium text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none min-w-0"
+          />
+          {opening?.name && opening.name !== label && (
+            <span className="text-xs text-zinc-400 dark:text-zinc-500 truncate">
+              Currently in: {opening.name}
+            </span>
+          )}
+        </div>
         {saveStatus !== "saved" && (
           <span className="text-xs text-amber-500 shrink-0">
             {saveStatus === "saving" ? "Saving…" : "Unsaved"}
