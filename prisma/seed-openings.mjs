@@ -8,7 +8,7 @@ import { Chess } from "chess.js"
 const prisma = new PrismaClient()
 
 const FILES = ["a", "b", "c", "d", "e"]
-const BASE_URL = "https://raw.githubusercontent.com/lichess-org/chess-openings/master"
+const BASE_URL = "https://cdn.jsdelivr.net/gh/lichess-org/chess-openings@master"
 
 function fenKey(fen) {
   return fen.trim().split(" ").slice(0, 4).join(" ")
