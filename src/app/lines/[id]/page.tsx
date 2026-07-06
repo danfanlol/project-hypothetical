@@ -69,6 +69,16 @@ function buildPathTree(nodes: LineNode[], targetId: string): LineNode[] {
   return []
 }
 
+// Returns the FENs from root to targetId (inclusive), in order.
+function getPathFens(nodes: LineNode[], targetId: string): string[] | null {
+  for (const n of nodes) {
+    if (n.id === targetId) return [n.fen]
+    const sub = getPathFens(n.children, targetId)
+    if (sub) return [n.fen, ...sub]
+  }
+  return null
+}
+
 // Returns an existing child of parentId (or top-level node) that matches the SAN move.
 function getExistingChild(tree: LineNode[], parentId: string | null, san: string): LineNode | null {
   const siblings = parentId === null ? tree : (findNode(tree, parentId)?.children ?? [])
@@ -175,22 +185,30 @@ export default function LineEditorPage() {
   // ─── Opening lookup ──────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!line || !currentFen) return
+    if (!line) return
     const activeLine = line
+    const pathFens = [activeLine.startFen, ...(selectedId ? (getPathFens(activeLine.tree, selectedId) ?? []) : [])]
 
     const controller = new AbortController()
 
     async function lookupOpening() {
       try {
-        const response = await fetch(`/api/openings?fen=${encodeURIComponent(currentFen)}`, {
-          signal: controller.signal,
-        })
-        if (!response.ok) return
-        const data = await response.json() as { opening: OpeningData | null }
-        setOpening(data.opening)
+        const responses = await Promise.all(
+          pathFens.map((fen) =>
+            fetch(`/api/openings?fen=${encodeURIComponent(fen)}`, { signal: controller.signal })
+          )
+        )
+        const results = await Promise.all(
+          responses.map((r) => (r.ok ? (r.json() as Promise<{ opening: OpeningData | null }>) : null))
+        )
+        // Deepest (last) matching position along the path wins — once in a named
+        // opening, staying in an unnamed continuation of it shouldn't blank the name.
+        let deepest: OpeningData | null = null
+        for (const result of results) if (result?.opening) deepest = result.opening
+        setOpening(deepest)
 
-        if (data.opening?.name && activeLine.labelAuto) {
-          const nextLabel = data.opening.name
+        if (deepest?.name && activeLine.labelAuto) {
+          const nextLabel = deepest.name
           if (activeLine.label !== nextLabel) {
             setLabel(nextLabel)
             setLine({ ...activeLine, label: nextLabel })
@@ -204,7 +222,7 @@ export default function LineEditorPage() {
 
     lookupOpening()
     return () => controller.abort()
-  }, [currentFen, line])
+  }, [selectedId, line])
 
   // ─── Keyboard navigation ─────────────────────────────────────────────────
 
