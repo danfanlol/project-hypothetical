@@ -74,6 +74,17 @@ model Position {
   user             User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model Opening {
+  id        String   @id @default(cuid())
+  name      String
+  eco       String?
+  fen       String
+  fenKey    String   @unique
+  moves     Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Line {
   id               String   @id @default(cuid())
   label            String?

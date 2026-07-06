@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Chess, type Square } from "chess.js"
 import { Chessboard, type PieceDropHandlerArgs, type SquareHandlerArgs } from "react-chessboard"
-import type { LineData, LineNode, PositionData } from "@/lib/types"
+import type { LineData, LineNode, OpeningData, PositionData } from "@/lib/types"
 import { fenKey } from "@/lib/chess-utils"
 import { LineTreeView } from "@/components/LineTreeView"
 import { AnalysisPanel } from "@/components/AnalysisPanel"
@@ -139,6 +139,7 @@ export default function LineEditorPage() {
   const [showLinkModal, setShowLinkModal] = useState(false)
   const [positions, setPositions] = useState<PositionData[] | null>(null)
   const [posSearch, setPosSearch] = useState("")
+  const [opening, setOpening] = useState<OpeningData | null>(null)
 
   // Board orientation
   const [boardOrientation, setBoardOrientation] = useState<"white" | "black">("white")
@@ -170,6 +171,40 @@ export default function LineEditorPage() {
         setLoading(false)
       })
   }, [id])
+
+  // ─── Opening lookup ──────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!line || !currentFen) return
+    const activeLine = line
+
+    const controller = new AbortController()
+
+    async function lookupOpening() {
+      try {
+        const response = await fetch(`/api/openings?fen=${encodeURIComponent(currentFen)}`, {
+          signal: controller.signal,
+        })
+        if (!response.ok) return
+        const data = await response.json() as { opening: OpeningData | null }
+        setOpening(data.opening)
+
+        if (data.opening?.name) {
+          const nextLabel = data.opening.name
+          if (!activeLine.label || activeLine.label !== nextLabel) {
+            setLabel(nextLabel)
+            setLine({ ...activeLine, label: nextLabel })
+            scheduleSave({ label: nextLabel })
+          }
+        }
+      } catch {
+        // ignore failures
+      }
+    }
+
+    lookupOpening()
+    return () => controller.abort()
+  }, [currentFen, line])
 
   // ─── Keyboard navigation ─────────────────────────────────────────────────
 
@@ -464,6 +499,10 @@ export default function LineEditorPage() {
     scheduleSave({ label: label.trim() || null })
   }
 
+  function handleLabelChange(value: string) {
+    setLabel(value)
+  }
+
   function flipBoard() {
     const next = boardOrientation === "white" ? "black" : "white"
     setBoardOrientation(next)
@@ -582,7 +621,7 @@ export default function LineEditorPage() {
         <input
           type="text"
           value={label}
-          onChange={(e) => setLabel(e.target.value)}
+          onChange={(e) => handleLabelChange(e.target.value)}
           onBlur={handleLabelBlur}
           placeholder="Untitled line"
           className="flex-1 bg-transparent text-sm font-medium text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none min-w-0"

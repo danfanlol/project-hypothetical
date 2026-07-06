@@ -9,6 +9,14 @@ export interface PositionData {
   createdAt: string
 }
 
+export interface OpeningData {
+  id: string
+  name: string
+  eco?: string
+  fen: string
+  moves: string[] | null
+}
+
 export interface LineNode {
   id: string
   move: string
