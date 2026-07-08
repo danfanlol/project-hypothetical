@@ -141,12 +141,22 @@ export function ReviewBoard({
             <p className="text-xs text-zinc-400 dark:text-zinc-500">{progressText}</p>
           )}
         </div>
-        <Link
-          href={exitHref ?? `/lines/${lineId}`}
-          className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
-        >
-          Exit review
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/analyze?fen=${encodeURIComponent(boardFen)}&orientation=${orientation}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+          >
+            Analyze position
+          </Link>
+          <Link
+            href={exitHref ?? `/lines/${lineId}`}
+            className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+          >
+            Exit review
+          </Link>
+        </div>
       </div>
 
       {/* Board */}
