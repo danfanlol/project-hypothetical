@@ -491,9 +491,10 @@ export default function LineEditorPage() {
     const updated = { ...line, tree: newTree }
     setLine(updated)
     if (selectedId === nodeId) {
-      setSelectedId(null)
-      setCurrentFen(line.startFen)
-      setAnnotationInput("")
+      const parent = findParentNode(line.tree, nodeId)
+      setSelectedId(parent?.id ?? null)
+      setCurrentFen(parent?.fen ?? line.startFen)
+      setAnnotationInput(parent?.annotation ?? "")
     }
     scheduleSave({ tree: newTree })
   }
