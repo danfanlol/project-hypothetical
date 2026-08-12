@@ -665,7 +665,7 @@ export default function LineEditorPage() {
           ← Lines
         </Link>
         <Link
-          href={`/review/${id}`}
+          href={selectedId ? `/review/${id}?from=${selectedId}` : `/review/${id}`}
           className="shrink-0 px-3 py-1.5 text-sm font-medium border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
         >
           Review
