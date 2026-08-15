@@ -106,7 +106,7 @@ function tryMove(chess: Chess, san: string): string | null {
 
 // ─── Transposition ───────────────────────────────────────────────────────────
 
-type TranspositionMatch = { lineId: string; lineLabel: string | null; move: string }
+type TranspositionMatch = { lineId: string; lineLabel: string | null; move: string; nodeId: string }
 
 // ─── Save status ─────────────────────────────────────────────────────────────
 
@@ -176,11 +176,21 @@ export default function LineEditorPage() {
         if (!data) return
         setLine(data)
         setLabel(data.label ?? "")
-        setCurrentFen(data.startFen)
         setBoardOrientation(data.boardOrientation ?? "white")
+
+        const targetNodeId = new URLSearchParams(window.location.search).get("node")
+        const targetNode = targetNodeId ? findNode(data.tree, targetNodeId) : null
+        if (targetNode) {
+          setSelectedId(targetNode.id)
+          setCurrentFen(targetNode.fen)
+          setAnnotationInput(targetNode.annotation ?? "")
+          router.replace(`/lines/${id}`)
+        } else {
+          setCurrentFen(data.startFen)
+        }
         setLoading(false)
       })
-  }, [id])
+  }, [id, router])
 
   // ─── Opening lookup ──────────────────────────────────────────────────────
 
@@ -299,7 +309,7 @@ export default function LineEditorPage() {
             const key = fenKey(node.fen)
             const existing = map.get(key) ?? []
             if (!existing.some((m) => m.lineId === l.id)) {
-              existing.push({ lineId: l.id, lineLabel: l.label, move: node.move })
+              existing.push({ lineId: l.id, lineLabel: l.label, move: node.move, nodeId: node.id })
               map.set(key, existing)
             }
           })
@@ -749,7 +759,7 @@ export default function LineEditorPage() {
                       <span className="shrink-0 text-xs text-amber-500 dark:text-amber-500">Linked ✓</span>
                     )}
                     <Link
-                      href={`/lines/${t.lineId}`}
+                      href={`/lines/${t.lineId}?node=${t.nodeId}`}
                       className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
                     >
                       Open →
