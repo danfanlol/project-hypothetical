@@ -58,6 +58,12 @@ function walkNodes(nodes: LineNode[], cb: (node: LineNode) => void): void {
   for (const n of nodes) { cb(n); walkNodes(n.children, cb) }
 }
 
+// Whether id is node itself or anywhere in its subtree.
+function subtreeContains(node: LineNode, id: string): boolean {
+  if (node.id === id) return true
+  return node.children.some((c) => subtreeContains(c, id))
+}
+
 // Returns a stripped tree: the single path from root to targetId, each ancestor
 // pruned to only the child on that path. The target node keeps all its children.
 function buildPathTree(nodes: LineNode[], targetId: string): LineNode[] {
@@ -497,10 +503,13 @@ export default function LineEditorPage() {
 
   function deleteNode(nodeId: string) {
     if (!line) return
+    const target = findNode(line.tree, nodeId)
+    const selectionRemoved =
+      selectedId !== null && target !== null && subtreeContains(target, selectedId)
     const newTree = removeNode(line.tree, nodeId)
     const updated = { ...line, tree: newTree }
     setLine(updated)
-    if (selectedId === nodeId) {
+    if (selectionRemoved) {
       const parent = findParentNode(line.tree, nodeId)
       setSelectedId(parent?.id ?? null)
       setCurrentFen(parent?.fen ?? line.startFen)
