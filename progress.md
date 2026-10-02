@@ -2,7 +2,14 @@
 
 ## What it does
 
-A review mode for chess opening lines. The user is drilled on every user-turn move in the line tree via a DFS walk:
+A review mode for chess opening lines. The user builds a review list from the line editor, then drills every saved item from the navbar's Review tab.
+
+- **Adding** — in the line editor (`/lines/<id>`), select a move and click **Add to Review**. This saves a *snapshot* (`ReviewItem`) of the path from the line's start to that move. Editing or deleting the source line afterwards doesn't affect it. Duplicates are allowed.
+- **POV** — the side that played the selected move is the side the user drills (`moverOf` in `src/lib/review.ts`). The path therefore always ends on a user move.
+- **Opening auto-play** — the first plies are played for the user (`reviewAutoPlies`). From white's POV, both white's and black's first moves are auto-played, so the user starts on white's 2nd move. From black's POV, white's first move is auto-played and the user answers it. The button is disabled when nothing would be left for the user to play (e.g. white POV at 1. e4). The API also rejects this case.
+- **Reviewing** — `/review` lists the saved items (label, moves, POV), each with a Remove button. "Start review" shuffles them and drills them one by one ("Line N of M"), then offers "Review again" / "Back to review list".
+
+Each item is turned into a one-branch tree and drilled by the same DFS state machine described below (which still supports branching trees):
 
 - **Opponent moves** are auto-played with animation.
 - **User moves** are tested — the user must play the correct move to advance.
@@ -15,23 +22,27 @@ A review mode for chess opening lines. The user is drilled on every user-turn mo
 
 | URL | Behaviour |
 |---|---|
-| `/review` | Fetches all lines, shuffles them, reviews one by one. "Next line" advances the queue. |
-| `/review/<lineId>` | Reviews a single line. |
-| Lines page | "Review" button on each line card links to `/review/<lineId>`. |
+| `/lines/<id>` | "Add to Review" button in the header saves the path to the selected move. |
+| `/review` | Review list (remove items) + shuffled review session. |
 | Nav bar | "Review" tab (between Practice and Search) links to `/review`. |
-| Review board header | Opening name is a link that opens the line editor in a new tab. |
+| Review board header | Label links to the source line in a new tab (plain text if the item has no `lineId`). |
+
+The old `/review/<lineId>` (whole-tree review, `?from=<nodeId>`) and the "Review" button on line cards were removed.
 
 ## Files
 
 | File | Role |
 |---|---|
-| `src/hooks/useLineReview.ts` | Core state machine (pure reducer + hook) |
+| `prisma/schema.prisma` | `ReviewItem` model: `label`, `startFen`, `moves` (`{move, fen}[]`), `orientation`, `lineId` (informational) |
+| `src/app/api/review-items/route.ts` | `POST {label, startFen, moves: SAN[], lineId}` — replays moves with chess.js, derives orientation, saves |
+| `src/app/api/review-items/[id]/route.ts` | `DELETE` — removes an item (owner only) |
+| `src/lib/review.ts` | `moverOf`, `reviewAutoPlies`, `formatMoves` |
+| `src/app/lines/[id]/page.tsx` | "Add to Review" button (`addToReview`, `canAddToReview`) |
+| `src/hooks/useLineReview.ts` | Core state machine (pure reducer + hook); `useLineReview(line, autoPlies)` |
 | `src/components/ReviewBoard.tsx` | Chess board UI for the review session |
-| `src/app/review/page.tsx` | Server component — fetches all lines, passes to AllLinesReviewClient |
-| `src/app/review/AllLinesReviewClient.tsx` | Client component — shuffles lines, manages queue index |
-| `src/app/review/[id]/page.tsx` | Server component — fetches single line from Prisma, auth-guards |
-| `src/app/review/[id]/LineReviewClient.tsx` | Client component — wires hook to board |
-| `src/components/LineList.tsx` | "Review" button next to "Open" on each line card |
+| `src/app/review/page.tsx` | Server component — fetches the user's review items |
+| `src/app/review/ReviewClient.tsx` | Review list + shuffled queue |
+| `src/app/review/ReviewItemSession.tsx` | Converts an item to a one-branch tree, wires hook to board |
 
 ## State machine (`useLineReview.ts`)
 
@@ -54,6 +65,7 @@ interface ReviewState {
   currentNode: LineNode | null
   orientation: "white" | "black"
   wrongCount: number         // wrong attempts at the current position; resets on node change
+  autoPlies: number          // nodes at depth < autoPlies are auto-played even on the user's turn
 }
 ```
 
@@ -66,7 +78,7 @@ Exposed (ReviewStatus):
   auto_playing + previewMoves non-empty  → "auto_playing"
   auto_playing + siblingAutoPlay         → "auto_playing"
   auto_playing + opponent's turn         → "auto_playing"
-  auto_playing + user's turn             → "awaiting_user"
+  auto_playing + user's turn (past autoPlies) → "awaiting_user"
   showing_correct / showing_wrong / showing_hint / done → passed through
 ```
 
@@ -82,6 +94,8 @@ Exposed (ReviewStatus):
 | `ADVANCE` | Auto-fires after `showing_correct` (0 ms for non-leaf, 300 ms for leaf nodes) |
 | `SHOW_HINT` | User clicks "Show correct move" (available after first wrong attempt) |
 | `RESET_HINT` | Timer fires 1500 ms after hint is shown to snap board back |
+
+`isUserPrompt(stack, orientation, autoPlies)` decides whether the current node is the user's to play: `stack.length > autoPlies` (stack depth = ply depth + 1) and it's the user's side to move. The auto-play effect, `submitMove`, and the exposed status all use it.
 
 ### DFS navigation
 

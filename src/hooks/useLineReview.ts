@@ -6,6 +6,8 @@ import type { LineData, LineNode } from "@/lib/types"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type ReviewLine = Pick<LineData, "id" | "startFen" | "tree" | "boardOrientation">
+
 interface ReviewFrame {
   nodes: LineNode[]
   parentFen: string
@@ -24,6 +26,7 @@ interface ReviewState {
   previewMoves: LineNode[]
   snapBoard: boolean
   wrongCount: number
+  autoPlies: number
 }
 
 export type ReviewStatus =
@@ -36,7 +39,7 @@ export type ReviewStatus =
   | "done"
 
 type ReviewAction =
-  | { type: "INIT"; line: LineData }
+  | { type: "INIT"; line: ReviewLine; autoPlies: number }
   | { type: "OPPONENT_PASS" }
   | { type: "PREVIEW_PASS" }
   | { type: "USER_MOVE"; san: string; fen: string }
@@ -59,6 +62,13 @@ function isUserTurn(fen: string, orientation: "white" | "black"): boolean {
   } catch {
     return false
   }
+}
+
+// Whether the current node is one the user must play: their side's move,
+// past the opening plies that are auto-played.
+function isUserPrompt(stack: ReviewFrame[], orientation: "white" | "black", autoPlies: number): boolean {
+  if (stack.length <= autoPlies) return false
+  return isUserTurn(stack[stack.length - 1].parentFen, orientation)
 }
 
 function cloneFrames(stack: ReviewFrame[]): ReviewFrame[] {
@@ -146,12 +156,12 @@ function nextDFSState(
 function reviewReducer(state: ReviewState, action: ReviewAction): ReviewState {
   switch (action.type) {
     case "INIT": {
-      const { line } = action
+      const { line, autoPlies } = action
       const stack: ReviewFrame[] = line.tree.length
         ? [{ nodes: line.tree, parentFen: line.startFen, index: 0 }]
         : []
       return nextDFSState(
-        { ...state, orientation: line.boardOrientation },
+        { ...state, orientation: line.boardOrientation, autoPlies },
         stack,
         line.startFen,
         false
@@ -278,7 +288,7 @@ const ANIMATION_MS = 200
 const OPPONENT_DELAY = ANIMATION_MS + 300
 const WRONG_DELAY = 350
 
-export function useLineReview(line: LineData) {
+export function useLineReview(line: ReviewLine, autoPlies = 0) {
   const [state, dispatch] = useReducer(reviewReducer, {
     stack: [],
     boardFen: line.startFen,
@@ -289,13 +299,14 @@ export function useLineReview(line: LineData) {
     previewMoves: [],
     snapBoard: false,
     wrongCount: 0,
+    autoPlies,
   })
 
   const stateRef = useRef(state)
   stateRef.current = state
 
   useEffect(() => {
-    dispatch({ type: "INIT", line })
+    dispatch({ type: "INIT", line, autoPlies })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [line.id])
 
@@ -308,13 +319,12 @@ export function useLineReview(line: LineData) {
       return () => clearTimeout(t)
     }
 
-    const frame = state.stack[state.stack.length - 1]
-    const userTurn = isUserTurn(frame.parentFen, state.orientation)
+    const userTurn = isUserPrompt(state.stack, state.orientation, state.autoPlies)
     if (userTurn && !state.siblingAutoPlay) return
 
     const t = setTimeout(() => dispatch({ type: "OPPONENT_PASS" }), OPPONENT_DELAY)
     return () => clearTimeout(t)
-  }, [state.status, state.currentNode, state.stack, state.orientation, state.siblingAutoPlay, state.previewMoves])
+  }, [state.status, state.currentNode, state.stack, state.orientation, state.siblingAutoPlay, state.previewMoves, state.autoPlies])
 
   useEffect(() => {
     if (state.status !== "showing_wrong") return
@@ -331,8 +341,7 @@ export function useLineReview(line: LineData) {
   const submitMove = useCallback((from: string, to: string) => {
     const s = stateRef.current
     if (!s.currentNode || !s.stack.length) return
-    const parentFen = s.stack[s.stack.length - 1].parentFen
-    if (!isUserTurn(parentFen, s.orientation)) return
+    if (!isUserPrompt(s.stack, s.orientation, s.autoPlies)) return
     if (s.siblingAutoPlay) return
     if (s.status !== "auto_playing") return
 
@@ -363,22 +372,13 @@ export function useLineReview(line: LineData) {
     if (state.status !== "auto_playing") return state.status
     if (!state.stack.length) return state.status
     if (state.siblingAutoPlay) return "auto_playing"
-    const frame = state.stack[state.stack.length - 1]
-    return isUserTurn(frame.parentFen, state.orientation) ? "awaiting_user" : "auto_playing"
-  })()
-
-  const progressText = (() => {
-    if (!state.stack.length) return ""
-    const frame = state.stack[state.stack.length - 1]
-    const rem = frame.nodes.length - frame.index
-    return `${rem} node${rem !== 1 ? "s" : ""} remaining at this level`
+    return isUserPrompt(state.stack, state.orientation, state.autoPlies) ? "awaiting_user" : "auto_playing"
   })()
 
   return {
     boardFen: state.boardFen,
     status: exposedStatus,
     orientation: state.orientation,
-    progressText,
     snapBoard: state.snapBoard,
     wrongCount: state.wrongCount,
     isLastMove: state.currentNode !== null && state.currentNode.children.length === 0,

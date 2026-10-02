@@ -19,12 +19,13 @@ interface ReviewBoardProps {
   wrongCount: number
   isLastMove: boolean
   lineLabel: string | null
-  lineId: string
+  lineId: string | null
   onMove: (from: string, to: string) => void
   onNext: () => void
   onShowHint: () => void
-  onDone?: () => void
-  exitHref?: string
+  onDone: () => void
+  doneLabel: string
+  onExit: () => void
 }
 
 export function ReviewBoard({
@@ -41,7 +42,8 @@ export function ReviewBoard({
   onNext,
   onShowHint,
   onDone,
-  exitHref,
+  doneLabel,
+  onExit,
 }: ReviewBoardProps) {
   const { settings } = useSettings()
   const boardSizePx = settings.boardSizePx
@@ -127,7 +129,7 @@ export function ReviewBoard({
       {/* Header */}
       <div className="w-full flex items-center justify-between">
         <div className="flex flex-col gap-0.5">
-          {lineLabel && (
+          {lineLabel && lineId && (
             <Link
               href={`/lines/${lineId}`}
               target="_blank"
@@ -136,6 +138,9 @@ export function ReviewBoard({
             >
               {lineLabel}
             </Link>
+          )}
+          {lineLabel && !lineId && (
+            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{lineLabel}</p>
           )}
           {progressText && (
             <p className="text-xs text-zinc-400 dark:text-zinc-500">{progressText}</p>
@@ -150,12 +155,12 @@ export function ReviewBoard({
           >
             Analyze position
           </Link>
-          <Link
-            href={exitHref ?? `/lines/${lineId}`}
+          <button
+            onClick={onExit}
             className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
           >
             Exit review
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -221,21 +226,12 @@ export function ReviewBoard({
             <p className="text-zinc-900 dark:text-zinc-100 font-semibold text-lg">
               Line complete!
             </p>
-            {onDone ? (
-              <button
-                onClick={onDone}
-                className="px-4 py-2 bg-zinc-900 dark:bg-zinc-700 text-white rounded-md text-sm hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
-              >
-                Next line
-              </button>
-            ) : (
-              <Link
-                href={`/lines/${lineId}`}
-                className="px-4 py-2 bg-zinc-900 dark:bg-zinc-700 text-white rounded-md text-sm hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
-              >
-                Back to line
-              </Link>
-            )}
+            <button
+              onClick={onDone}
+              className="px-4 py-2 bg-zinc-900 dark:bg-zinc-700 text-white rounded-md text-sm hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
+            >
+              {doneLabel}
+            </button>
           </div>
         )}
       </div>

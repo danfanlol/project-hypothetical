@@ -37,3 +37,18 @@ export interface LineData {
   createdAt: string
   updatedAt: string
 }
+
+export interface ReviewMove {
+  move: string
+  fen: string
+}
+
+export interface ReviewItemData {
+  id: string
+  label: string | null
+  startFen: string
+  moves: ReviewMove[]
+  orientation: "white" | "black"
+  lineId: string | null
+  createdAt: string
+}

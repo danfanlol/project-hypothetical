@@ -7,6 +7,7 @@ import { Chess, type Square } from "chess.js"
 import { Chessboard, type PieceDropHandlerArgs, type SquareHandlerArgs } from "react-chessboard"
 import type { LineData, LineNode, OpeningData, PositionData } from "@/lib/types"
 import { fenKey } from "@/lib/chess-utils"
+import { moverOf, reviewAutoPlies } from "@/lib/review"
 import { LineTreeView } from "@/components/LineTreeView"
 import { AnalysisPanel } from "@/components/AnalysisPanel"
 import { ChessErrorBoundary } from "@/components/ChessErrorBoundary"
@@ -85,6 +86,16 @@ function getPathFens(nodes: LineNode[], targetId: string): string[] | null {
   return null
 }
 
+// Returns the nodes from root to targetId (inclusive), in order.
+function getPathNodes(nodes: LineNode[], targetId: string): LineNode[] | null {
+  for (const n of nodes) {
+    if (n.id === targetId) return [n]
+    const sub = getPathNodes(n.children, targetId)
+    if (sub) return [n, ...sub]
+  }
+  return null
+}
+
 // Returns an existing child of parentId (or top-level node) that matches the SAN move.
 function getExistingChild(tree: LineNode[], parentId: string | null, san: string): LineNode | null {
   const siblings = parentId === null ? tree : (findNode(tree, parentId)?.children ?? [])
@@ -117,6 +128,8 @@ type TranspositionMatch = { lineId: string; lineLabel: string | null; move: stri
 // ─── Save status ─────────────────────────────────────────────────────────────
 
 type SaveStatus = "saved" | "saving" | "unsaved"
+
+type AddToReviewStatus = "idle" | "adding" | "added" | "error"
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -162,6 +175,9 @@ export default function LineEditorPage() {
 
   // Confirm delete
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  // "Add to Review" button feedback
+  const [addToReviewStatus, setAddToReviewStatus] = useState<AddToReviewStatus>("idle")
 
   // Engine analysis toggle
   const [showAnalysis, setShowAnalysis] = useState(false)
@@ -601,6 +617,36 @@ export default function LineEditorPage() {
     router.push("/lines")
   }
 
+  // ─── Add to review ───────────────────────────────────────────────────────
+
+  async function addToReview() {
+    if (!selectedId || !line) return
+    const path = getPathNodes(line.tree, selectedId)
+    if (!path) return
+    setAddToReviewStatus("adding")
+    try {
+      const res = await fetch("/api/review-items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lineId: id,
+          label: label.trim() || opening?.name || null,
+          startFen: line.startFen,
+          moves: path.map((n) => n.move),
+        }),
+      })
+      setAddToReviewStatus(res.ok ? "added" : "error")
+    } catch {
+      setAddToReviewStatus("error")
+    }
+  }
+
+  useEffect(() => {
+    if (addToReviewStatus !== "added" && addToReviewStatus !== "error") return
+    const t = setTimeout(() => setAddToReviewStatus("idle"), 1500)
+    return () => clearTimeout(t)
+  }, [addToReviewStatus])
+
   // ─── Render ───────────────────────────────────────────────────────────────
 
   // Must be before early returns — hooks cannot be called conditionally
@@ -636,6 +682,10 @@ export default function LineEditorPage() {
   }
 
   const selectedNode = selectedId ? findNode(line.tree, selectedId) : null
+  // Reviewing needs at least one move left for the user after the auto-played opening plies.
+  const selectedPathLength = selectedId ? (getPathNodes(line.tree, selectedId)?.length ?? 0) : 0
+  const canAddToReview =
+    selectedNode !== null && selectedPathLength > reviewAutoPlies(moverOf(selectedNode.fen))
   const boardSizePx = settings.boardSizePx
   const transpositions = fenMap?.get(fenKey(currentFen)) ?? []
 
@@ -683,12 +733,20 @@ export default function LineEditorPage() {
         >
           ← Lines
         </Link>
-        <Link
-          href={selectedId ? `/review/${id}?from=${selectedId}` : `/review/${id}`}
-          className="shrink-0 px-3 py-1.5 text-sm font-medium border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        <button
+          onClick={addToReview}
+          disabled={!canAddToReview || addToReviewStatus === "adding"}
+          title={canAddToReview ? undefined : "Select a move past the opening moves to add this line to review"}
+          className="shrink-0 px-3 py-1.5 text-sm font-medium border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
         >
-          Review
-        </Link>
+          {addToReviewStatus === "adding"
+            ? "Adding…"
+            : addToReviewStatus === "added"
+              ? "Added ✓"
+              : addToReviewStatus === "error"
+                ? "Failed"
+                : "Add to Review"}
+        </button>
         {!confirmDelete ? (
           <button
             onClick={() => setConfirmDelete(true)}

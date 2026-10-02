@@ -21,6 +21,7 @@ model User {
   sessions      Session[]
   positions     Position[]
   lines         Line[]
+  reviewItems   ReviewItem[]
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 }
@@ -96,4 +97,18 @@ model Line {
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+// A snapshot of one path through a line, from startFen to the move the user added it at.
+// Independent of the source line: editing or deleting the line doesn't change it.
+model ReviewItem {
+  id          String   @id @default(cuid())
+  label       String?
+  startFen    String
+  moves       Json     // { move: string; fen: string }[], replayed from startFen
+  orientation String   // "white" | "black" — the side that played the last move, i.e. the side the user drills
+  lineId      String?  // source line, informational only
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 }
