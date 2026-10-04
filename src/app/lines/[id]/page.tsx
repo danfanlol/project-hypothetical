@@ -123,7 +123,21 @@ function tryMove(chess: Chess, san: string): string | null {
 
 // ─── Transposition ───────────────────────────────────────────────────────────
 
-type TranspositionMatch = { lineId: string; lineLabel: string | null; move: string; nodeId: string }
+type TranspositionMatch = {
+  lineId: string
+  lineLabel: string | null
+  move: string
+  nodeId: string
+  // Moves the other line plays from this position (merged across every node there that reaches it)
+  nextMoves: string[]
+}
+
+// "12. Nf3" / "12… Nf6" for a move played from the given FEN
+function numberedMove(fen: string, san: string): string {
+  const parts = fen.split(" ")
+  const moveNo = parts[5] ?? "1"
+  return parts[1] === "b" ? `${moveNo}… ${san}` : `${moveNo}. ${san}`
+}
 
 // ─── Save status ─────────────────────────────────────────────────────────────
 
@@ -330,9 +344,14 @@ export default function LineEditorPage() {
           walkNodes(l.tree, (node) => {
             const key = fenKey(node.fen)
             const existing = map.get(key) ?? []
-            if (!existing.some((m) => m.lineId === l.id)) {
-              existing.push({ lineId: l.id, lineLabel: l.label, move: node.move, nodeId: node.id })
+            let match = existing.find((m) => m.lineId === l.id)
+            if (!match) {
+              match = { lineId: l.id, lineLabel: l.label, move: node.move, nodeId: node.id, nextMoves: [] }
+              existing.push(match)
               map.set(key, existing)
+            }
+            for (const child of node.children) {
+              if (!match.nextMoves.includes(child.move)) match.nextMoves.push(child.move)
             }
           })
         }
@@ -810,9 +829,10 @@ export default function LineEditorPage() {
               <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
                 ⇄ Transposition — this position is also reached in:
               </p>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1.5">
                 {transpositions.map((t) => (
-                  <div key={t.lineId} className="flex items-center gap-2 min-w-0">
+                  <div key={t.lineId} className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <span className="text-xs text-amber-600 dark:text-amber-300 flex-1 truncate">{t.lineLabel ?? "Untitled line"}</span>
                     {selectedId && selectedNode?.transposeLineId !== t.lineId && (
                       <button
@@ -831,6 +851,12 @@ export default function LineEditorPage() {
                     >
                       Open →
                     </Link>
+                  </div>
+                  <span className="text-xs font-mono text-amber-700/80 dark:text-amber-300/70">
+                    {t.nextMoves.length > 0
+                      ? `→ ${t.nextMoves.map((m) => numberedMove(currentFen, m)).join(", ")}`
+                      : "(line ends here)"}
+                  </span>
                   </div>
                 ))}
               </div>
