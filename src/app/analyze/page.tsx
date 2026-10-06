@@ -23,6 +23,12 @@ function AnalyzeContent() {
   const searchParams = useSearchParams()
   const fen = parseFen(searchParams.get("fen"))
   const orientation = searchParams.get("orientation") === "black" ? "black" : "white"
+  // Optional space-separated SANs from fen; the panel lets you step through them
+  const movesParam = searchParams.get("moves")?.trim() ?? ""
+  const moves = movesParam ? movesParam.split(/\s+/) : undefined
+  // Optional ply to open at; "end" opens after the last move
+  const plyParam = searchParams.get("ply")
+  const startPly = plyParam === "end" ? (moves?.length ?? 0) : Number(plyParam) || 0
 
   if (!fen) {
     return (
@@ -34,7 +40,7 @@ function AnalyzeContent() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 w-full flex flex-col items-center">
-      <AnalysisPanel key={fen} fen={fen} orientation={orientation} />
+      <AnalysisPanel key={`${fen}|${movesParam}|${startPly}`} fen={fen} orientation={orientation} moves={moves} startPly={startPly} />
     </div>
   )
 }

@@ -26,6 +26,7 @@ interface ReviewState {
   previewMoves: LineNode[]
   snapBoard: boolean
   wrongCount: number
+  hadMistake: boolean // any wrong move anywhere in the line; reset only by INIT
   autoPlies: number
 }
 
@@ -161,7 +162,7 @@ function reviewReducer(state: ReviewState, action: ReviewAction): ReviewState {
         ? [{ nodes: line.tree, parentFen: line.startFen, index: 0 }]
         : []
       return nextDFSState(
-        { ...state, orientation: line.boardOrientation, autoPlies },
+        { ...state, orientation: line.boardOrientation, autoPlies, hadMistake: false },
         stack,
         line.startFen,
         false
@@ -197,7 +198,7 @@ function reviewReducer(state: ReviewState, action: ReviewAction): ReviewState {
       }
 
       // Wrong: show the move on the board, then auto-reset for retry.
-      return { ...state, boardFen: fen, status: "showing_wrong", snapBoard: false, wrongCount: state.wrongCount + 1 }
+      return { ...state, boardFen: fen, status: "showing_wrong", snapBoard: false, wrongCount: state.wrongCount + 1, hadMistake: true }
     }
 
     case "RESET_WRONG": {
@@ -299,6 +300,7 @@ export function useLineReview(line: ReviewLine, autoPlies = 0) {
     previewMoves: [],
     snapBoard: false,
     wrongCount: 0,
+    hadMistake: false,
     autoPlies,
   })
 
@@ -381,6 +383,7 @@ export function useLineReview(line: ReviewLine, autoPlies = 0) {
     orientation: state.orientation,
     snapBoard: state.snapBoard,
     wrongCount: state.wrongCount,
+    hadMistake: state.hadMistake,
     isLastMove: state.currentNode !== null && state.currentNode.children.length === 0,
     submitMove,
     advance,

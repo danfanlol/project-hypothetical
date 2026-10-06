@@ -7,7 +7,7 @@ import { Chess, type Square } from "chess.js"
 import { Chessboard, type PieceDropHandlerArgs, type SquareHandlerArgs } from "react-chessboard"
 import type { LineData, LineNode, OpeningData, PositionData } from "@/lib/types"
 import { fenKey } from "@/lib/chess-utils"
-import { moverOf, reviewAutoPlies } from "@/lib/review"
+import { formatMoves, moverOf, reviewAutoPlies } from "@/lib/review"
 import { LineTreeView } from "@/components/LineTreeView"
 import { AnalysisPanel } from "@/components/AnalysisPanel"
 import { ChessErrorBoundary } from "@/components/ChessErrorBoundary"
@@ -143,7 +143,11 @@ function numberedMove(fen: string, san: string): string {
 
 type SaveStatus = "saved" | "saving" | "unsaved"
 
-type AddToReviewStatus = "idle" | "adding" | "added" | "error"
+type AddToReviewStatus = "idle" | "adding" | "added" | "replaced" | "error"
+
+// Saved review items that overlap the one being added (409 from POST /api/review-items)
+type ReviewOverlapItem = { id: string; label: string | null; startFen: string; moves: string[] }
+type ReviewConflict = { extended: ReviewOverlapItem[]; covering: ReviewOverlapItem[] }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -192,6 +196,7 @@ export default function LineEditorPage() {
 
   // "Add to Review" button feedback
   const [addToReviewStatus, setAddToReviewStatus] = useState<AddToReviewStatus>("idle")
+  const [reviewConflict, setReviewConflict] = useState<ReviewConflict | null>(null)
 
   // Engine analysis toggle
   const [showAnalysis, setShowAnalysis] = useState(false)
@@ -638,10 +643,13 @@ export default function LineEditorPage() {
 
   // ─── Add to review ───────────────────────────────────────────────────────
 
-  async function addToReview() {
+  // resolve omitted: the server reports overlapping saved items (409) instead of saving,
+  // and the user picks "replace" (supersede the shorter ones) or "keep" (save anyway).
+  async function addToReview(resolve?: "replace" | "keep") {
     if (!selectedId || !line) return
     const path = getPathNodes(line.tree, selectedId)
     if (!path) return
+    setReviewConflict(null)
     setAddToReviewStatus("adding")
     try {
       const res = await fetch("/api/review-items", {
@@ -652,16 +660,33 @@ export default function LineEditorPage() {
           label: label.trim() || opening?.name || null,
           startFen: line.startFen,
           moves: path.map((n) => n.move),
+          resolve,
         }),
       })
-      setAddToReviewStatus(res.ok ? "added" : "error")
+      if (res.status === 409) {
+        const { extended, covering } = await res.json()
+        setReviewConflict({ extended, covering })
+        setAddToReviewStatus("idle")
+        return
+      }
+      if (!res.ok) {
+        setAddToReviewStatus("error")
+        return
+      }
+      const { replaced } = await res.json()
+      setAddToReviewStatus(replaced ? "replaced" : "added")
     } catch {
       setAddToReviewStatus("error")
     }
   }
 
+  // A pending overlap prompt belongs to the move it was raised for
   useEffect(() => {
-    if (addToReviewStatus !== "added" && addToReviewStatus !== "error") return
+    setReviewConflict(null)
+  }, [selectedId])
+
+  useEffect(() => {
+    if (addToReviewStatus !== "added" && addToReviewStatus !== "replaced" && addToReviewStatus !== "error") return
     const t = setTimeout(() => setAddToReviewStatus("idle"), 1500)
     return () => clearTimeout(t)
   }, [addToReviewStatus])
@@ -753,8 +778,8 @@ export default function LineEditorPage() {
           ← Lines
         </Link>
         <button
-          onClick={addToReview}
-          disabled={!canAddToReview || addToReviewStatus === "adding"}
+          onClick={() => addToReview()}
+          disabled={!canAddToReview || addToReviewStatus === "adding" || reviewConflict !== null}
           title={canAddToReview ? undefined : "Select a move past the opening moves to add this line to review"}
           className="shrink-0 px-3 py-1.5 text-sm font-medium border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
         >
@@ -762,6 +787,8 @@ export default function LineEditorPage() {
             ? "Adding…"
             : addToReviewStatus === "added"
               ? "Added ✓"
+              : addToReviewStatus === "replaced"
+                ? "Replaced ✓"
               : addToReviewStatus === "error"
                 ? "Failed"
                 : "Add to Review"}
@@ -791,6 +818,58 @@ export default function LineEditorPage() {
           </div>
         )}
       </div>
+
+      {/* Add to Review overlap prompt. "Covered" wins: the new line adds nothing a saved one doesn't drill. */}
+      {reviewConflict && (
+        <div className="border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-2.5 flex flex-col gap-2">
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+            {reviewConflict.covering.length > 0
+              ? "Already covered: your review list has this line, or a longer version of it."
+              : reviewConflict.extended.length === 1
+                ? "Your review list has a shorter version of this line. Replace it with this one?"
+                : `Your review list has ${reviewConflict.extended.length} shorter versions of this line. Replace them with this one?`}
+          </p>
+          <ul className="flex flex-col gap-0.5">
+            {(reviewConflict.covering.length > 0 ? reviewConflict.covering : reviewConflict.extended).map((it) => (
+              <li key={it.id} className="text-xs text-amber-700 dark:text-amber-400 min-w-0 truncate">
+                <span className="font-medium">{it.label || "Untitled"}</span>
+                <span className="font-mono ml-2">{formatMoves(it.startFen, it.moves)}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex items-center gap-2">
+            {reviewConflict.covering.length > 0 ? (
+              <button
+                onClick={() => addToReview("keep")}
+                className="px-3 py-1 text-xs font-medium bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
+              >
+                Add anyway
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => addToReview("replace")}
+                  className="px-3 py-1 text-xs font-medium bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
+                >
+                  Replace
+                </button>
+                <button
+                  onClick={() => addToReview("keep")}
+                  className="px-3 py-1 text-xs font-medium border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+                >
+                  Keep both
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => setReviewConflict(null)}
+              className="px-3 py-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main split panel */}
       <div className="flex flex-1 min-h-0 overflow-hidden justify-center">

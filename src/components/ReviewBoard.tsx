@@ -25,6 +25,8 @@ interface ReviewBoardProps {
   onShowHint: () => void
   onDone: () => void
   doneLabel: string
+  doneMessage?: string
+  analyzeHref: string
   onExit: () => void
 }
 
@@ -43,6 +45,8 @@ export function ReviewBoard({
   onShowHint,
   onDone,
   doneLabel,
+  doneMessage,
+  analyzeHref,
   onExit,
 }: ReviewBoardProps) {
   const { settings } = useSettings()
@@ -148,7 +152,7 @@ export function ReviewBoard({
         </div>
         <div className="flex items-center gap-3">
           <Link
-            href={`/analyze?fen=${encodeURIComponent(boardFen)}&orientation=${orientation}`}
+            href={analyzeHref}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
@@ -226,6 +230,9 @@ export function ReviewBoard({
             <p className="text-zinc-900 dark:text-zinc-100 font-semibold text-lg">
               Line complete!
             </p>
+            {doneMessage && (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center">{doneMessage}</p>
+            )}
             <button
               onClick={onDone}
               className="px-4 py-2 bg-zinc-900 dark:bg-zinc-700 text-white rounded-md text-sm hover:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"

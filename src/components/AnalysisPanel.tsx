@@ -48,19 +48,45 @@ function EvalBar({ line, isBlackToMove }: { line: AnalysisLine; isBlackToMove: b
   )
 }
 
+interface HistoryEntry {
+  fen: string
+  san: string | null // move leading to this position; null for the starting position
+}
+
+// Replays SAN moves from fen, stopping at the first illegal one.
+function buildHistory(fen: string, moves: string[]): HistoryEntry[] {
+  const entries: HistoryEntry[] = [{ fen, san: null }]
+  const game = new Chess(fen)
+  for (const m of moves) {
+    try {
+      const move = game.move(m)
+      entries.push({ fen: game.fen(), san: move.san })
+    } catch {
+      break
+    }
+  }
+  return entries
+}
+
 interface AnalysisPanelProps {
   fen: string
   orientation: "white" | "black"
+  // Optional line (SANs from fen) to step through; the panel starts at fen.
+  moves?: string[]
+  // Ply of moves to open at instead of fen (clamped to the line's length)
+  startPly?: number
 }
 
-export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelProps) {
+export function AnalysisPanel({ fen: initialFen, orientation, moves, startPly = 0 }: AnalysisPanelProps) {
   const { settings } = useSettings()
   const boardColors = BOARD_THEMES[settings.boardTheme]
-  const [history, setHistory] = useState<string[]>([initialFen])
-  const [historyIndex, setHistoryIndex] = useState(0)
+  const [initialHistory] = useState(() => buildHistory(initialFen, moves ?? []))
+  const initialIndex = Math.max(0, Math.min(startPly, initialHistory.length - 1))
+  const [history, setHistory] = useState<HistoryEntry[]>(initialHistory)
+  const [historyIndex, setHistoryIndex] = useState(initialIndex)
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null)
   const [optionSquares, setOptionSquares] = useState<Record<string, CSSProperties>>({})
-  const explorationFen = history[historyIndex]
+  const explorationFen = history[historyIndex].fen
 
   const { lines, isAnalyzing } = useStockfish(explorationFen)
 
@@ -73,7 +99,9 @@ export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelPro
   const isBlackToMove = explorationFen.trim().split(" ")[1] === "b"
   const topLine = displayLines[0]
   const depth = lines[0]?.depth ?? (isStale ? lastLinesRef.current[0]?.depth ?? 0 : 0)
-  const hasMoved = historyIndex > 0
+  const deviated =
+    history.length !== initialHistory.length || history.some((h, i) => h.fen !== initialHistory[i].fen)
+  const hasMoved = historyIndex !== initialIndex || deviated
 
   // Keep a ref to history.length so the keyboard handler (empty-dep effect) can
   // clamp the right-arrow index without a stale closure.
@@ -118,10 +146,26 @@ export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelPro
     } catch {
       return false
     }
-    setHistory((prev) => [...prev.slice(0, historyIndex + 1), game.fen()])
+    const fen = game.fen()
+    // Playing the next move of the current history just steps forward, keeping the rest of it
+    if (history[historyIndex + 1]?.fen !== fen) {
+      setHistory((prev) => [...prev.slice(0, historyIndex + 1), { fen, san: game.history().at(-1) ?? null }])
+    }
     setHistoryIndex((i) => i + 1)
     return true
   }
+
+  // Numbered move tokens for history[1..]: "1." / "1..." prefixes from initialFen's counters
+  const startFields = initialFen.split(" ")
+  const startMoveNum = Number(startFields[5]) || 1
+  const startWhiteToMove = startFields[1] !== "b"
+  const moveTokens = history.slice(1).map((entry, i) => {
+    const ply = i + (startWhiteToMove ? 0 : 1)
+    const num = startMoveNum + Math.floor(ply / 2)
+    const isWhite = ply % 2 === 0
+    const prefix = isWhite ? `${num}.` : i === 0 ? `${num}...` : null
+    return { index: i + 1, san: entry.san, prefix }
+  })
 
   function handlePieceDrop({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean {
     if (!targetSquare) return false
@@ -165,7 +209,7 @@ export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelPro
         <div className="flex items-center gap-3">
           {hasMoved && (
             <button
-              onClick={() => { setHistory([initialFen]); setHistoryIndex(0) }}
+              onClick={() => { setHistory(initialHistory); setHistoryIndex(initialIndex) }}
               className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 underline transition-colors"
             >
               Reset
@@ -206,6 +250,37 @@ export function AnalysisPanel({ fen: initialFen, orientation }: AnalysisPanelPro
           {" · click or drag to explore"}
         </p>
       </div>
+
+      {/* Move list */}
+      {moves && moveTokens.length > 0 && (
+        <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0.5 text-sm font-mono mt-2 mb-1">
+          <button
+            onClick={() => setHistoryIndex(0)}
+            className={`px-1 rounded transition-colors ${
+              historyIndex === 0
+                ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
+                : "text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            }`}
+          >
+            Start
+          </button>
+          {moveTokens.map((t) => (
+            <span key={t.index} className="flex items-baseline">
+              {t.prefix && <span className="text-zinc-400 dark:text-zinc-500 mr-0.5">{t.prefix}</span>}
+              <button
+                onClick={() => setHistoryIndex(t.index)}
+                className={`px-1 rounded transition-colors ${
+                  historyIndex === t.index
+                    ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
+                    : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                }`}
+              >
+                {t.san}
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Analysis lines */}
       {displayLines.length === 0 && (
